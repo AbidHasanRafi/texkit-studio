@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+/build/
+/dist/
+.pytest_cache/
+.ruff_cache/
+
+# Platform wheels add the engine binary at build time
+src/texkit_studio/bin/
+
+# Local TexKit settings in test folders
+.texkit/
