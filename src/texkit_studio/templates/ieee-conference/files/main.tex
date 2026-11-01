@@ -1,0 +1,70 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{cite}
+
+\begin{document}
+
+\title{Paper Title: Concise and Informative}
+
+\author{
+  \IEEEauthorblockN{First Author}
+  \IEEEauthorblockA{Department, University\\
+  City, Country\\
+  first.author@example.edu}
+  \and
+  \IEEEauthorblockN{Second Author}
+  \IEEEauthorblockA{Department, University\\
+  City, Country\\
+  second.author@example.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+Summarise the problem, your approach, the main result and why it matters,
+in about 150 to 250 words.
+\end{abstract}
+
+\begin{IEEEkeywords}
+first keyword, second keyword, third keyword
+\end{IEEEkeywords}
+
+\section{Introduction}
+State the problem and its context. Explain what is missing in prior work and
+list your contributions~\cite{example2024}.
+
+\section{Related Work}
+Group earlier work by theme and say how yours differs.
+
+\section{Method}
+Describe your approach. Number equations you refer to later:
+\begin{equation}
+  \mathcal{L}(\theta) = \frac{1}{N}\sum_{i=1}^{N} \ell\bigl(f_\theta(x_i), y_i\bigr).
+  \label{eq:loss}
+\end{equation}
+
+\section{Results}
+\begin{table}[t]
+  \centering
+  \caption{Main results.}
+  \label{tab:results}
+  \begin{tabular}{lcc}
+    \toprule
+    Method & Accuracy (\%) & Latency (ms) \\
+    \midrule
+    Baseline & 91.2 & 34 \\
+    Proposed & 93.8 & 19 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+Table~\ref{tab:results} compares the proposed method with the baseline.
+
+\section{Conclusion}
+Summarise the findings and suggest future work.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,49 @@
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{setspace}
+\usepackage{hyperref}
+\onehalfspacing
+
+\begin{document}
+
+\pagenumbering{alph}  % keeps the title page's PDF anchor separate from page i and page 1
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\LARGE\bfseries Thesis Title\par}
+  \vspace{1.5cm}
+  {\Large Your Name\par}
+  \vspace{1cm}
+  A thesis submitted for the degree of\\
+  \textit{Degree Name}\par
+  \vfill
+  Department\\
+  University\\[0.5cm]
+  \today
+\end{titlepage}
+
+\pagenumbering{roman}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+Summarise the whole thesis in one page.
+
+\chapter*{Acknowledgements}
+Thank the people who helped you.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\clearpage
+\pagenumbering{arabic}
+\input{chapters/introduction}
+\input{chapters/background}
+\input{chapters/conclusion}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,73 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title{Welcome to TexKit Studio}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This short document is a tour. Edit anything you like: the PDF on the right
+updates by itself a moment after you stop typing.
+\end{abstract}
+
+\section{Writing text}
+Paragraphs are separated by a blank line. You can make text \textbf{bold},
+\textit{italic} or \texttt{monospaced}. Press Ctrl+B or Ctrl+I (Cmd on a Mac)
+to do it quickly.
+
+\section{Maths}
+Inline maths goes between dollar signs, like $E = mc^2$. Displayed equations
+get a number you can refer to:
+\begin{equation}
+  \int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}.
+  \label{eq:gauss}
+\end{equation}
+Equation~\eqref{eq:gauss} is the Gaussian integral.
+
+\section{Lists and tables}
+\begin{itemize}
+  \item Bulleted lists use \texttt{itemize}.
+  \item Numbered lists use \texttt{enumerate}.
+\end{itemize}
+
+\begin{table}[ht]
+  \centering
+  \caption{A small table.}
+  \label{tab:example}
+  \begin{tabular}{lrr}
+    \toprule
+    Method & Accuracy & Time (s) \\
+    \midrule
+    Baseline & 91.2 & 3.4 \\
+    Ours     & 93.8 & 1.9 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Figures and citations}
+Put image files in the project folder and include them with
+\verb|\includegraphics|. Cite sources from \texttt{references.bib}
+like this~\cite{knuth1984}.
+
+\begin{figure}[ht]
+  \centering
+  \fbox{\parbox[c][3cm][c]{0.6\linewidth}{\centering Your figure goes here}}
+  \caption{Replace the box with \texttt{\textbackslash includegraphics\{file\}}.}
+  \label{fig:placeholder}
+\end{figure}
+
+\section{When something goes wrong}
+Mistakes show up in the Issues panel in plain English, with a link to the
+exact line. Try it: misspell a command and see what happens.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
