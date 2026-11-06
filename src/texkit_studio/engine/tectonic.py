@@ -19,7 +19,7 @@ import tarfile
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Sequence
 
 from ..config import ENGINE_DIR
 
@@ -53,10 +53,87 @@ ASSETS: dict[tuple[str, str], tuple[str, str]] = {
 EXE = "tectonic.exe" if os.name == "nt" else "tectonic"
 BUNDLED = Path(__file__).resolve().parent.parent / "bin" / EXE
 DOWNLOADED = ENGINE_DIR / f"tectonic-{VERSION}" / EXE
+TEX_DIR = Path(__file__).resolve().parent / "tex"  # TeX files we put ahead of the engine's bundle
+
+
+# A package cache that ships with the platform wheels (built by scripts/build_seed.py): Tectonic's own
+# format file plus every package and font the built-in templates use. Unpacked once into a cache that
+# TexKit manages, so the first compile needs no download.
+SEED_NAME = "tectonic-seed.zip"
+BUNDLED_SEED = Path(__file__).resolve().parent.parent / "bin" / SEED_NAME
+MANAGED_CACHE = ENGINE_DIR.parent / "tectonic-cache"
+_SEED_MARKER = ".texkit-seeded"
+_SEED_PARTS = ("bundles/", "formats/")  # the only folders a seed may contain
 
 
 class EngineError(RuntimeError):
     pass
+
+
+def cache_dir() -> Path | None:
+    """The package cache TexKit manages, or None to leave Tectonic's default location alone.
+
+    It is used only when a seed ships in this install (or a managed cache already exists), so a plain
+    `pip install` of the pure wheel behaves exactly as before. A TECTONIC_CACHE_DIR you set yourself wins.
+    """
+    if os.environ.get("TECTONIC_CACHE_DIR"):
+        return None
+    if BUNDLED_SEED.is_file() or MANAGED_CACHE.is_dir():
+        return MANAGED_CACHE
+    return None
+
+
+def environment() -> dict[str, str]:
+    """Extra environment variables for every Tectonic process, so they all share one cache."""
+    folder = cache_dir()
+    return {"TECTONIC_CACHE_DIR": str(folder)} if folder else {}
+
+
+def seed_cache() -> bool:
+    """Unpack the bundled seed into the managed cache, once. Returns True if files were added.
+
+    The cache is content-addressed, so existing files are never overwritten and an interrupted unpack
+    just resumes. Entries that aren't plain files under bundles/ or formats/ are refused.
+    """
+    folder = cache_dir()
+    if folder is None or folder != MANAGED_CACHE or not BUNDLED_SEED.is_file():
+        return False
+    stamp = str(BUNDLED_SEED.stat().st_size)
+    marker = folder / _SEED_MARKER
+    try:
+        if marker.read_text(encoding="utf-8") == stamp:
+            return False
+    except OSError:
+        pass
+    added = 0
+    folder.mkdir(parents=True, exist_ok=True)
+    root = folder.resolve()
+    with zipfile.ZipFile(BUNDLED_SEED) as zf:
+        for info in zf.infolist():
+            name = info.filename
+            if info.is_dir():
+                continue
+            target = (folder / name).resolve()
+            if not name.startswith(_SEED_PARTS) or ".." in Path(name).parts or root not in target.parents:
+                raise EngineError(f"The bundled package cache contains an unexpected entry: {name}")
+            if target.exists():
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            part = target.with_name(target.name + ".part")
+            with zf.open(info) as src, open(part, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            os.replace(part, target)
+            added += 1
+    marker.write_text(stamp, encoding="utf-8")
+    return added > 0
+
+
+def cache_size() -> int:
+    """Bytes in the managed cache (0 if there isn't one)."""
+    folder = cache_dir()
+    if folder is None or not folder.is_dir():
+        return 0
+    return sum(f.stat().st_size for f in folder.rglob("*") if f.is_file())
 
 
 def platform_key() -> tuple[str, str]:
@@ -90,7 +167,9 @@ def version(path: Path) -> str | None:
 
 
 def ensure(progress: Callable[[int, int], None] | None = None) -> Path:
-    """Return a usable Tectonic binary, downloading the pinned release if needed."""
+    """Return a usable Tectonic binary, downloading the pinned release if needed.
+    Also unpacks the bundled package cache the first time (a no-op afterwards)."""
+    seed_cache()
     found = find()
     if found:
         return found
@@ -139,16 +218,26 @@ def fetch_binary(key: tuple[str, str], progress: Callable[[int, int], None] | No
         return tf.extractfile(member).read()
 
 
-def command(exe: Path, main: Path, outdir: Path, *, only_cached: bool = False) -> list[str]:
+def command(
+    exe: Path, main: Path, outdir: Path, *, only_cached: bool = False, search_paths: Sequence[Path] = ()
+) -> list[str]:
+    """Build the Tectonic command line.
+
+    `TEX_DIR` (our graphics.cfg, which teaches XeTeX to use converted EPS files) and any
+    `search_paths` are added with `-Z search-path`. Tectonic ignores that option under
+    `--untrusted`, so the flag isn't passed. That doesn't let documents run programs: shell-escape
+    is a separate switch that stays off (tests/test_engine.py checks that `\\write18` is refused).
+    """
     cmd = [
         str(exe),
         "--synctex",
         "--keep-logs",
         "--keep-intermediates",
-        "--untrusted",
         "--outdir",
         str(outdir),
     ]
+    for path in (TEX_DIR, *search_paths):
+        cmd += ["-Z", f"search-path={path}"]
     if only_cached:
         cmd.append("--only-cached")
     cmd.append(str(main))

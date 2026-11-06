@@ -6,6 +6,7 @@ import { h, icon, dialog, toast, showMenu } from "./dom.js";
 import { state, set, on } from "./store.js";
 import { picker } from "./palette.js";
 import * as editor from "./editor.js";
+import { verifyDialog, resultFor, BADGE } from "./verify.js";
 
 const KIND_ICON = { figure: "image", table: "table", equation: "sigma", section: "hash", chapter: "hash", algorithm: "list", listing: "terminal", theorem: "bulb" };
 const KIND_NAME = { figure: "Figures", table: "Tables", equation: "Equations", section: "Sections", chapter: "Chapters", algorithm: "Algorithms", listing: "Listings", theorem: "Theorems", other: "Other labels" };
@@ -192,7 +193,8 @@ export function initRefsPanel(container) {
     const bibItems = (onlyProblems ? entries.filter((e) => !e.cites.length) : entries);
     if (bibItems.length || !onlyProblems) {
       const addBtn = h("button", { class: "icon-btn sm", title: "Add a source by DOI or arXiv ID", "aria-label": "Add a source", onclick: (e) => { e.stopPropagation(); doiDialog(); } }, icon("plus", "sm"));
-      groups.push(section("bib", "Bibliography", entries.length, bibItems.length ? bibItems.map((e) => {
+      const verifyBtn = h("button", { class: "icon-btn sm", title: "Check these references online: real, right DOI, not retracted", "aria-label": "Check references online", onclick: (e) => { e.stopPropagation(); verifyDialog(); } }, icon("check-circle", "sm"));
+      groups.push(section("bib", "Bibliography", entries.length,bibItems.length ? bibItems.map((e) => {
         const uncited = !e.cites.length && !a.bibliography.nociteAll;
         return row({
           icon: "book",
@@ -200,12 +202,14 @@ export function initRefsPanel(container) {
           sub: `${e.short ? `${e.short} · ` : ""}${e.key}`,
           badge: uncited ? "not cited" : a.bibliography.nociteAll && !e.cites.length ? "nocite" : `${e.cites.length}×`,
           badgeCls: uncited ? "warn" : "ok",
+          status: checkBadge(e),
           uses: e.cites,
           onclick: () => editor.jumpTo(e.file, e.line),
           onInsert: () => insertCite(e.key),
           insertLabel: "Cite this at the cursor",
         });
-      }) : [h("div", { class: "side-empty" }, a.bibliography.files.length ? "No entries in your .bib file yet." : "No bibliography yet. Use + to add a source by DOI.")], false, addBtn));
+      }) : [h("div", { class: "side-empty" }, a.bibliography.files.length ? "No entries in your .bib file yet." : "No bibliography yet. Use + to add a source by DOI.")], false,
+      entries.length ? h("span", { style: { display: "contents" } }, verifyBtn, addBtn) : addBtn));
     }
     if (!groups.length) groups.push(h("div", { class: "side-empty" }, onlyProblems ? "Nothing to fix. Everything is referenced and cited." : "No figures, tables or references yet."));
     container.replaceChildren(head, ...groups);
@@ -219,7 +223,16 @@ export function initRefsPanel(container) {
     return h("div", { class: "rf-sec" }, headBtn, isCollapsed ? null : h("div", { class: "rf-rows" }, rows));
   }
 
-  function row({ icon: ic, cls = "", title, sub, badge, badgeCls = "", uses, onclick, onInsert, insertLabel }) {
+  /** A small "Verified" / "Retracted" / "No DOI" chip from the online reference check. */
+  function checkBadge(e) {
+    const r = resultFor(e);
+    if (!r || r.error) return null;
+    const [text, level] = BADGE[r.code] || ["Checked", r.level];
+    return h("button", { class: `rf-badge rf-vf ${level}`, title: `${r.headline} (click for details)`,
+      onclick: (ev) => { ev.stopPropagation(); verifyDialog(); } }, icon(level === "ok" ? "check" : level === "info" ? "info" : "warn", "sm"), text);
+  }
+
+  function row({ icon: ic, cls = "", title, sub, badge, badgeCls = "", uses, onclick, onInsert, insertLabel, status = null }) {
     const badgeEl = badge ? h("button", {
       class: `rf-badge ${badgeCls}`,
       title: uses && uses.length ? "Show where it's used" : "",
@@ -233,6 +246,7 @@ export function initRefsPanel(container) {
     return h("div", { class: `rf-row ${cls}`, role: "button", tabindex: "0", title: sub, onclick, onkeydown: (e) => { if (e.key === "Enter") onclick(); } },
       icon(ic, "sm rf-icon"),
       h("span", { class: "rf-text" }, h("span", { class: "rf-title" }, title), sub ? h("span", { class: "rf-sub" }, sub) : null),
+      status,
       badgeEl,
       onInsert ? h("button", { class: "icon-btn sm rf-insert", title: insertLabel, "aria-label": insertLabel, onclick: (e) => { e.stopPropagation(); onInsert(); } }, icon("plus", "sm")) : null,
     );
@@ -240,5 +254,7 @@ export function initRefsPanel(container) {
 
   const sectionState = new Map();
   on(["analysis"], render);
+  let vfTimer;
+  on(["refcheck"], () => { clearTimeout(vfTimer); vfTimer = setTimeout(render, 200); });  // results arrive one by one
   render();
 }

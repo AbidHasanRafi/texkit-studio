@@ -18,6 +18,9 @@ class Entry:
     title: str = ""
     author: str = ""
     year: str = ""
+    doi: str = ""
+    url: str = ""
+    eprint: str = ""
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -83,6 +86,7 @@ def parse(text: str, file: str) -> list[Entry]:
             key=m.group(2), type=kind, file=file, line=text.count("\n", 0, m.start()) + 1,
             title=_field(body, "title"), author=_field(body, "author") or _field(body, "editor"),
             year=_field(body, "year") or (_field(body, "date")[:4]),
+            doi=_field(body, "doi"), url=_field(body, "url"), eprint=_field(body, "eprint"),
         ))
     return entries
 

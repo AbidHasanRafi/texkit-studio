@@ -17,7 +17,7 @@ from send2trash import send2trash
 from .. import config
 from .._meta import DIST_NAME, PRODUCT_NAME, TAGLINE, __version__
 from ..config import build_dir
-from ..core import analysis, export, folders, formatter, history, project, templates, tools
+from ..core import analysis, export, folders, formatter, history, project, templates, tools, verify
 from ..core.safefs import MAX_TEXT_BYTES, PathError, atomic_write, content_hash, file_kind, resolve_in
 from ..core.studio import Studio
 from ..engine import offline, tectonic
@@ -79,6 +79,17 @@ class LookupBody(BaseModel):
     id: str
 
 
+class VerifyBody(BaseModel):
+    key: str
+    type: str = ""
+    title: str = ""
+    author: str = ""
+    year: str = ""
+    doi: str = ""
+    url: str = ""
+    eprint: str = ""
+
+
 class AddCitationBody(BaseModel):
     bibtex: str
     file: str | None = None
@@ -138,11 +149,12 @@ def create_app(studio: Studio) -> FastAPI:
     @app.get("/api/session")
     async def session():
         root = studio.root
-        main = await asyncio.to_thread(project.detect_main, root)
+        info = await asyncio.to_thread(project.main_info, root)
         last = studio.compiler.last
         return {
             "product": PRODUCT_NAME, "tagline": TAGLINE, "version": __version__, "platform": sys.platform,
-            "root": str(root), "name": root.name or str(root), "mainFile": main,
+            "root": str(root), "name": root.name or str(root), "mainFile": info["file"],
+            "mainSource": info["source"], "mainCandidates": info["candidates"][:12],
             "home": str(Path.home()), "recent": config.recent_folders(),
             "engine": {"installed": tectonic.find() is not None, "version": tectonic.VERSION},
             "compile": last, "compiling": studio.compiler.running,
@@ -180,8 +192,9 @@ def create_app(studio: Studio) -> FastAPI:
     # ── project files ───────────────────────────────────────────────────
     @app.get("/api/tree")
     async def tree():
+        info = await asyncio.to_thread(project.main_info, studio.root)
         return {"root": str(studio.root), "tree": await asyncio.to_thread(project.tree, studio.root),
-                "mainFile": await asyncio.to_thread(project.detect_main, studio.root)}
+                "mainFile": info["file"], "mainSource": info["source"], "mainCandidates": info["candidates"][:12]}
 
     @app.get("/api/file")
     async def read_file(path: str):
@@ -282,7 +295,8 @@ def create_app(studio: Studio) -> FastAPI:
             raise HTTPException(400, "The main file must be a .tex file.")
         settings = project.load_settings(studio.root)
         project.save_settings(studio.root, {**settings, "mainFile": body.path})
-        return {"mainFile": body.path}
+        # A chapter file has no \documentclass: allowed (some setups put it elsewhere) but the UI warns.
+        return {"mainFile": body.path, "isDocument": await asyncio.to_thread(project.is_document, p)}
 
     # ── templates ───────────────────────────────────────────────────────
     @app.get("/api/templates")
@@ -382,13 +396,13 @@ def create_app(studio: Studio) -> FastAPI:
 
     # ── references, citations and the submission check ──────────────────
     @app.get("/api/analysis")
-    async def get_analysis():
-        return await asyncio.to_thread(analysis.analyse, studio.root)
+    async def get_analysis(spelling: str | None = None):
+        return await asyncio.to_thread(analysis.analyse, studio.root, spelling)
 
     @app.get("/api/check")
-    async def submission_check():
+    async def submission_check(spelling: str | None = None):
         root = studio.root
-        result = await asyncio.to_thread(analysis.analyse, root)
+        result = await asyncio.to_thread(analysis.analyse, root, spelling)
         unused = await asyncio.to_thread(analysis.unused_files, root, result)
         abstract_words = None
         if result["main"]:
@@ -421,6 +435,14 @@ def create_app(studio: Studio) -> FastAPI:
         found["file"] = result["bibliography"]["files"][0] if result["bibliography"]["files"] else "references.bib"
         found["bibIncluded"] = result["bibliography"]["included"]
         return found
+
+    @app.post("/api/citations/verify")
+    async def citation_verify(body: VerifyBody):
+        """Check one bibliography entry online. Only called when the user starts a reference check."""
+        try:
+            return await asyncio.to_thread(verify.verify_entry, body.model_dump())
+        except verify.Offline:
+            raise HTTPException(503, "No internet connection. Checking references needs one.")
 
     @app.post("/api/citations/add")
     async def citation_add(body: AddCitationBody):

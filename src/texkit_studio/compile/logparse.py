@@ -13,7 +13,8 @@ import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-_STDERR = re.compile(r"^(error|warning): (?:(?P<file>[^:\n]+?):(?P<line>\d+): )?(?P<msg>.+)$")
+_STDERR = re.compile(r"^(error|warning): (?:(?P<file>(?:[A-Za-z]:)?[^:\n]+?):(?P<line>\d+): )?(?P<msg>.+)$")
+_CAUSE = re.compile(r"^caused by: (?P<msg>.+)$")
 _LOG_ERROR = re.compile(r"^! (?P<msg>.+)$")
 _LOG_LINE = re.compile(r"^l\.(?P<line>\d+) ?(?P<text>.*)$")
 _LOG_WARNING = re.compile(r"^(?:LaTeX|Package (?P<pkg>[\w-]+)|Class (?P<cls>[\w-]+)) Warning: (?P<msg>.*)$")
@@ -22,6 +23,9 @@ _NOISE = (
     "were issued by the TeX engine",
     "Fontconfig error",
     "halted on potentially-recoverable error",
+    "ccessing absolute path",  # the compile wrapper opens your main file by absolute path; system fonts too
+    "Emergency stop",  # an installed engine's follow-on to the real error
+    "Fatal error occurred, no output PDF",
 )
 
 
@@ -61,6 +65,12 @@ def _resolve(root: Path, name: str | None) -> str | None:
     name = name.strip().strip('"').replace("\\", "/")
     if name.startswith("./"):
         name = name[2:]
+    # The compile wrapper makes TeX report the main file by its absolute path.
+    if Path(name).is_absolute() or re.match(r"^[A-Za-z]:/", name):
+        try:
+            name = Path(name).resolve().relative_to(root.resolve()).as_posix()
+        except (ValueError, OSError):
+            return None
     for candidate in (name, f"{name}.tex"):
         p = root / candidate
         if p.is_file():
@@ -68,7 +78,9 @@ def _resolve(root: Path, name: str | None) -> str | None:
     return None
 
 
-def parse(root: Path, main_rel: str, stderr_lines: list[str], log_text: str) -> list[Issue]:
+def parse(root: Path, main_rel: str, stderr_lines: list[str], log_text: str, from_log: bool = False) -> list[Issue]:
+    """`from_log`: take errors from the TeX log's "! ..." lines too. Tectonic prints each error with its
+    file and line on stderr, so it doesn't need it; an installed engine's console output is less exact."""
     issues: list[Issue] = []
     seen: set[tuple] = set()
 
@@ -102,16 +114,25 @@ def parse(root: Path, main_rel: str, stderr_lines: list[str], log_text: str) -> 
         return None, None
 
     # 1. stderr: exact file + line for errors and box warnings.
+    # When the PDF writer fails, Tectonic prints the real reason on a "caused by:" line
+    # (e.g. `pdf: image inclusion failed for "logo.eps"`), after a generic error that says nothing.
+    causes = [c.group("msg").strip() for c in map(_CAUSE.match, (s.strip() for s in stderr_lines)) if c]
+    for cause in causes:
+        add(Issue("error", "engine", cause))
     for raw_line in stderr_lines:
         m = _STDERR.match(raw_line.strip())
         if not m or any(n in raw_line for n in _NOISE):
             continue
         kind, msg = m.group(1), m.group("msg").strip()
+        if re.fullmatch(r".+:\d+:", msg):
+            continue  # first half of a wrapped "file:line:" warning; the message follows on its own line
         file = _resolve(root, m.group("file")) or (m.group("file") and main_rel)
         line = int(m.group("line")) if m.group("line") else None
         if kind == "error":
             if not m.group("file") and msg.startswith(("the XeTeX engine", "something bad happened")):
                 continue
+            if causes and not m.group("file") and re.match(r"the \w+ engine had an unrecoverable error", msg):
+                continue  # the cause above says it better
             ctext, tok = context_for(msg, line)
             add(Issue("error", "latex" if m.group("file") else "engine", msg, file=file, line=line,
                       context=ctext, token=tok))
@@ -157,6 +178,29 @@ def parse(root: Path, main_rel: str, stderr_lines: list[str], log_text: str) -> 
         lm = _INPUT_LINE.search(text)
         category = "reference" if re.search(r"Citation|Reference|Label", text) else ("package" if pkg else "latex")
         add(Issue("warning", category, text, file=file, line=int(lm.group(1)) if lm else None))
+
+    # 1b. Errors from the log itself ("! Undefined control sequence." plus "l.12 ..." for the line).
+    if from_log:
+        for i, line in enumerate(log_lines):
+            m = _LOG_ERROR.match(line)
+            if not m or m.group("msg").startswith("Emergency stop"):
+                continue
+            lineno = ctext = tok = None
+            for j in range(i + 1, min(i + 25, len(log_lines))):
+                lm = _LOG_LINE.match(log_lines[j])
+                if lm:
+                    after = log_lines[j + 1].strip() if j + 1 < len(log_lines) else ""
+                    lineno, ctext = int(lm.group("line")), f"{lm.group('text')}{after}".strip()
+                    t = re.search(r"(\\[A-Za-z@]+|\\.)\s*$", lm.group("text"))
+                    tok = t.group(1) if t else None
+                    break
+            add(Issue("error", "latex", m.group("msg").rstrip("."), file=current[i] or main_rel,
+                      line=lineno, context=ctext, token=tok))
+
+    # 2b. Notes from TexKit's own prelude, such as "biblatex uses the BibTeX backend".
+    for line in log_lines:
+        if line.startswith("TEXKIT-NOTE: "):
+            add(Issue("info", "engine", line[len("TEXKIT-NOTE: "):].strip()))
 
     # 3. Missing characters in the font (emoji, unusual symbols).
     for line in log_lines:

@@ -71,6 +71,12 @@ def _bad_command(issue: Issue) -> str | None:
     return None
 
 
+# Commands from LaTeX releases newer than the built-in engine's (2021-11): a typo is very unlikely.
+NEWER_KERNEL = {"NewTaggingSocket", "NewTaggingSocketPlug", "AssignTaggingSocketPlug", "UseTaggingSocket", "NewSocket",
+                "NewSocketPlug", "AssignSocketPlug", "UseSocket", "NewStructureName", "AssignStructureRole",
+                "DeclareKeys", "SetKeys", "ProcessKeyOptions", "DocumentMetadata", "tag_struct_begin:n"}
+
+
 @rule(r"^Undefined control sequence")
 def _undefined(issue: Issue, _m) -> None:
     cmd = _bad_command(issue)
@@ -79,6 +85,13 @@ def _undefined(issue: Issue, _m) -> None:
         issue.explanation = "LaTeX met a command it doesn't know. It's usually a typo, or a command from a package that isn't loaded."
         return
     name = cmd[1:]
+    if name in NEWER_KERNEL:
+        issue.title = "This template needs a newer LaTeX than the built-in engine"
+        issue.category = "engine"
+        issue.explanation = (f"{cmd} is part of a LaTeX release newer than the one built into TexKit Studio (2021), so a recent package "
+                             "or class can't run here. Install a TeX distribution (TeX Live or MiKTeX; on Windows: winget install "
+                             "MiKTeX.MiKTeX); TexKit Studio uses it automatically when the built-in engine fails like this.")
+        return
     issue.title = f"Unknown command {cmd}"
     pkg = PACKAGE_FOR.get(name)
     close = difflib.get_close_matches(name, KNOWN_COMMANDS, n=1, cutoff=0.75)
@@ -105,9 +118,44 @@ def _file_not_found(issue: Issue, m) -> None:
     issue.title = f"File not found: {name}"
     if name.endswith((".sty", ".cls")):
         issue.explanation = (f"{name} isn't a package LaTeX can find. Check the spelling. If it's a journal's own class or style file, "
-                             "put it in your project folder next to the main file.")
+                             "put it in your project folder next to the main file. If you compile with your own TeX installation, "
+                             "the package may just not be installed there: install it (MiKTeX Console, or tlmgr install), or add "
+                             "\"autoInstall\": true to .texkit/project.json to let MiKTeX fetch missing packages.")
     else:
         issue.explanation = f"LaTeX can't find {name}. Check the file name and folder, and remember that paths are relative to the main file."
+
+
+@rule(r'^Package fontspec Error: The font "(.+?)" cannot be found')
+def _font_missing(issue: Issue, m) -> None:
+    issue.title = f"The font “{m.group(1)}” isn't installed"
+    issue.category = "engine"
+    issue.explanation = ("fontspec looks for fonts installed on this computer, and this one isn't. Install it, or choose one that is. "
+                         "Latin Modern and the other fonts that ship with LaTeX are only found by name when a TeX distribution is "
+                         "installed; TexKit Studio uses that automatically if you have one.")
+
+
+@rule(r"^biblatex uses the BibTeX backend")
+def _bibtex_backend(issue: Issue, _m) -> None:
+    issue.title = "biblatex is using BibTeX instead of Biber"
+    issue.category = "bibliography"
+    issue.explanation = ("The built-in engine can't run Biber, so TexKit Studio switched biblatex to its BibTeX backend. Most "
+                         "documents look the same. Styles and options that need Biber (for example the apa style) won't work; "
+                         "install a full TeX distribution to use them.")
+
+
+@rule(r'^pdf: image inclusion failed for "(.+?)"')
+def _image_inclusion(issue: Issue, m) -> None:
+    name = m.group(1)
+    issue.category = "graphics"
+    issue.title = f"Couldn't put the image {name} into the PDF"
+    if name.lower().endswith((".eps", ".ps")):
+        stem = name.rsplit(".", 1)[0]
+        issue.explanation = (f"The PDF writer can't embed EPS images. TexKit Studio normally converts them for you, so this one "
+                             f"slipped through. Export {name} as a PDF named {stem.rsplit('/', 1)[-1]}-eps-converted-to.pdf next to it, "
+                             "or install Ghostscript.")
+    else:
+        issue.explanation = (f"{name} may be damaged or in a format the engine can't read (some CMYK, 16-bit or progressive "
+                             "images). Open it in an image editor and save it again as PNG, JPEG or PDF.")
 
 
 @rule(r"^Unable to load picture or PDF file '(.+?)'|^File `(.+?)' not found|Cannot determine size of graphic in (.+?) ")
@@ -238,8 +286,9 @@ def _missing_char(issue: Issue, m) -> None:
 @rule(r"(?i)shell escape|\\write18|minted")
 def _shell_escape(issue: Issue, _m) -> None:
     issue.title = "This package needs to run external programs"
-    issue.explanation = ("For safety, TexKit Studio doesn't let documents run programs (shell-escape). "
-                         "Packages such as minted and svg need it. Use listings instead of minted, or convert SVG images to PDF.")
+    issue.explanation = ("For safety, TexKit Studio doesn't let documents run programs (shell-escape). Packages such as minted and "
+                         "svg need it. Either use listings instead of minted and convert SVG images to PDF, or, for a document you "
+                         "trust and with a TeX distribution installed, add \"shellEscape\": true to .texkit/project.json.")
 
 
 @rule(r"(?i)(failed to|couldn't|unable to) (download|fetch|connect)|network|dns error|timed out")

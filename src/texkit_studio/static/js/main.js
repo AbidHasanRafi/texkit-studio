@@ -14,7 +14,8 @@ import { insertMenuItems, symbolPicker, tableDialog, ensurePackage, pickImage, i
 import { picker, shortcutsDialog } from "./palette.js";
 import { historyDialog } from "./history.js";
 import { checkDialog } from "./check.js";
-import { showSearch, showReferences } from "./sidebar.js";
+import { verifyDialog } from "./verify.js";
+import { showSearch, showReferences, setMainFile } from "./sidebar.js";
 
 injectSprite();
 applyTheme();
@@ -173,9 +174,20 @@ splitter.addEventListener("keydown", (e) => {
 // ── Project loading ───────────────────────────────────────────────────
 async function loadTree() {
   const t = await api.tree();
-  set({ tree: t.tree, mainFile: t.mainFile });
+  set({ tree: t.tree, mainFile: t.mainFile, mainSource: t.mainSource, mainCandidates: t.mainCandidates || [] });
   return t;
 }
+
+// With several complete documents and no choice made, we pick one. Say so once, and say how to change it.
+const hintedMain = new Set();
+function hintMainChoice() {
+  const root = state.session?.root;
+  if (!root || hintedMain.has(root) || state.mainSource !== "auto" || state.mainCandidates.length < 2) return;
+  hintedMain.add(root);
+  toast(`This folder has ${state.mainCandidates.length} documents. Compiling ${state.mainFile}. To compile another one, hover it in the file list, click ⋯ and choose “Set as main file”.`,
+    { timeout: 12000 });
+}
+document.addEventListener("texkit:compile", () => compile({ restart: true }));
 const loadTreeSoon = debounce(() => loadTree().then(() => editor.buildIndex()).catch(() => {}), 300);
 
 // ── Reference & citation analysis (refreshed after saves, compiles and file changes) ──
@@ -210,9 +222,10 @@ async function loadProject() {
     compiling: s.compiling,
     log: [],
   });
-  document.title = `${s.name} — ${s.product}`;
+  document.title = `${s.name} | ${s.product}`;
   loadCollapsed();
   const t = await loadTree();
+  hintMainChoice();
 
   if (s.hasPdf) { lastRev = s.rev; pdf.load(`/api/output.pdf?rev=${s.rev}&t=${Date.now()}`); }
   else pdf.showEmpty({ action: !!t.mainFile });
@@ -298,9 +311,14 @@ async function newProject() {
 }
 
 // ── Compile ────────────────────────────────────────────────────────────
-async function compile({ clean = false } = {}) {
+// Every request restarts the running compile on the server, so clicking again while one is in
+// progress would only delay the result. Manual requests are ignored then; auto-compile after an
+// edit (`restart`) and "recompile from scratch" (`clean`) still go through because they differ.
+async function compile({ clean = false, restart = false } = {}) {
+  // (If the live connection dropped we can't trust `compiling`, so don't block then.)
+  if (state.compiling && state.connected && !clean && !restart) return;
+  set({ compiling: true });  // before the save, so the UI reacts on the very first click
   await editor.saveAll();
-  set({ compiling: true });
   try {
     const r = await api.compile(state.active, clean);
     if (r.status !== "cancelled" && !state.connected) finished(r);
@@ -309,7 +327,17 @@ async function compile({ clean = false } = {}) {
     toast(`Compile failed: ${e.message}`, { kind: "error" });
   }
 }
-const compileSoon = debounce(() => compile(), 900);
+const compileSoon = debounce(() => compile({ restart: true }), 900);
+
+// Mirror the compile state in the PDF pane, not just the header, so it's obvious something is happening.
+on(["compiling", "engineProgress"], () => {
+  const p = state.engineProgress;
+  if (p) {
+    const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+    pdf.setBusy({ text: `Setting up LaTeX engine… ${pct}%` });
+  } else if (state.compiling) pdf.setBusy({ text: "Compiling…", elapsed: true });
+  else pdf.setBusy(null);
+});
 editor.setAfterSave(() => { refreshAnalysisSoon(); if (editor.settings.autoCompile) compileSoon(); });
 
 function finished(r) {
@@ -471,6 +499,12 @@ function commandPalette(only) {
     cmd("Show this line in the PDF", syncForward, { icon: "target", kbd: "Mod-Shift-J", keywords: "synctex forward" }),
     cmd("Insert a reference to a figure, table…", refPicker, { icon: "link", kbd: "Alt-R", keywords: "ref label cross" }),
     cmd("Insert a citation", citePicker, { icon: "quote", kbd: "Alt-C", keywords: "cite bibliography" }),
+    cmd("Check references online (fake, retracted, missing DOI)", verifyDialog, { icon: "search", keywords: "verify citations bibliography crossref openalex retracted hallucinated doi" }),
+    cmd("Set the open file as the main file", () => {
+      if (!state.active?.toLowerCase().endsWith(".tex")) return toast("Open a .tex file first.");
+      if (state.active === state.mainFile) return toast(`${state.active} is already the main file.`);
+      setMainFile(state.active);
+    }, { icon: "star", keywords: "compile root document" }),
     cmd("Add a source by DOI or arXiv ID", doiDialog, { icon: "plus", keywords: "bibtex reference" }),
     cmd("Insert a figure from an image", pickImage, { icon: "image" }),
     cmd("Insert a table", tableDialog, { icon: "table" }),

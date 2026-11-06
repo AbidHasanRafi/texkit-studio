@@ -6,7 +6,7 @@ import { state, set, on, allIssues } from "./store.js";
 
 const CM = window.CodeMirror;
 export const settings = Object.assign(
-  { autoCompile: true, fontSize: 14, wrap: true, spellcheck: false, formatIndent: 2, formatAlign: true, formatOnSave: false },
+  { autoCompile: true, fontSize: 14, wrap: true, spellcheck: false, formatIndent: 2, formatAlign: true, formatOnSave: false, autoVerify: false, spelling: "auto" },
   store("settings", {}),
 );
 export function saveSettings(patch) {
@@ -363,12 +363,17 @@ const bumpDoc = debounce(() => set({ docTick: Date.now() }), 300);
 async function saveTab(tab) {
   if (!tab.dirty || !tab.doc || tab.readOnly) return true;
   if (tab.saving) return tab.saving;
-  const gen = tab.gen;
   const run = (async () => {
     try {
-      const r = await api.write(tab.path, tab.doc.getValue(), tab.hash);
-      tab.hash = r.hash;
-      if (tab.gen === gen) tab.dirty = false;
+      // Keep going while you typed during the save. Otherwise the newer text would never be written
+      // (the timer's saveTab call just joined this one) and the tab would stay "unsaved".
+      let gen;
+      do {
+        gen = tab.gen;
+        const r = await api.write(tab.path, tab.doc.getValue(), tab.hash);
+        tab.hash = r.hash;
+        if (tab.gen === gen) tab.dirty = false;
+      } while (tab.dirty && tab.gen !== gen);
       return true;
     } catch (e) {
       if (e.status === 409) conflict(tab);
@@ -424,9 +429,19 @@ async function reloadTab(tab, force = false) {
 export function externalChange(paths) {
   for (const tab of state.tabs) {
     if (!paths.includes(tab.path)) continue;
-    if (tab.dirty) conflict(tab);
-    else reloadTab(tab);
+    if (!tab.dirty) reloadTab(tab);
+    else if (!tab.saving) checkConflict(tab);
   }
+}
+
+// The watcher can report our own autosave late (cloud-synced folders, antivirus). Only warn when
+// the file on disk really differs from what we last loaded or saved.
+async function checkConflict(tab) {
+  try {
+    const info = await api.read(tab.path);
+    if (info.hash === tab.hash || tab.saving) return;
+  } catch { /* unreadable: fall through and warn */ }
+  if (tab.dirty) conflict(tab);
 }
 
 // ── Navigation & fixes ────────────────────────────────────────────────
@@ -444,6 +459,22 @@ export async function jumpTo(file, line) {
   const target = file || state.mainFile;
   if (!target) return;
   await openFile(target, { line: line || null });
+}
+
+/** Add `name = {value},` right after the `@type{key,` of a .bib entry. Returns false if the entry isn't there. */
+export async function setBibField(file, line, key, name, value) {
+  const tab = await openFile(file, { line, focus: false });
+  if (!tab || !tab.doc) return false;
+  const doc = tab.doc;
+  const re = new RegExp(`@\\w+\\s*[{(]\\s*${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,`);
+  for (let ln = Math.max(0, (line || 1) - 1); ln < Math.min(doc.lineCount(), (line || 1) + 2); ln++) {
+    const m = re.exec(doc.getLine(ln));
+    if (m) {
+      doc.replaceRange(`\n  ${name} = {${value}},`, { line: ln, ch: m.index + m[0].length });
+      return true;
+    }
+  }
+  return false;
 }
 
 export async function applyFix(issue, fix) {

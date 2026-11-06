@@ -220,8 +220,10 @@ def prepare_offline(_args: argparse.Namespace) -> int:
 
 
 def doctor(_args: argparse.Namespace) -> int:
+    from .compile.eps import find_ghostscript
     from .core.export import pandoc_path
     from .engine import tectonic
+    from .engine.system_tex import find as find_system_tex
 
     ok = True
     _print(f"\n  {term.bold(term.accent(PRODUCT_NAME))} {term.dim('v' + __version__ + ' on Python ' + sys.version.split()[0] + ' (' + sys.platform + ')')}\n")
@@ -232,12 +234,30 @@ def doctor(_args: argparse.Namespace) -> int:
         _print(f"  {term.mark('ok')} {'LaTeX engine'.ljust(13)} Tectonic {tectonic.version(exe) or '?'} {term.dim('at ' + str(exe))}")
     else:
         _print(f"  {term.mark('info')} {'LaTeX engine'.ljust(13)} {term.dim(f'not downloaded yet (Tectonic {tectonic.VERSION} is fetched on first compile)')}")
+    managed = tectonic.cache_dir()
+    if managed and (managed / ".texkit-seeded").is_file():
+        _print(f"  {term.mark('ok')} {'Packages'.ljust(13)} {term.dim(f'LaTeX packages ready for offline use ({tectonic.cache_size() / 1e6:.0f} MB at {managed})')}")
+    elif managed and tectonic.BUNDLED_SEED.is_file():
+        _print(f"  {term.mark('info')} {'Packages'.ljust(13)} {term.dim('bundled with this install, unpacked on the first compile')}")
+    else:
+        _print(f"  {term.mark('info')} {'Packages'.ljust(13)} {term.dim('downloaded on first use, then cached (run `texkit prepare-offline` to fetch ahead)')}")
     pandoc = pandoc_path()
     if pandoc:
         _print(f"  {term.mark('ok')} {'Word export'.ljust(13)} Pandoc {term.dim('at ' + pandoc)}")
     else:
         _print(f"  {term.mark('error')} {'Word export'.ljust(13)} {term.bad('Pandoc not found')}")
     ok = ok and bool(pandoc)
+    tex = find_system_tex()
+    if tex:
+        engines = ", ".join(e for e in ("pdflatex", "xelatex", "lualatex") if tex.tool(e))
+        _print(f"  {term.mark('ok')} {'Full TeX'.ljust(13)} {engines} {term.dim('at ' + str(Path(tex.tools[next(e for e in ('pdflatex', 'xelatex', 'lualatex') if tex.tool(e))]).parent))}")
+    else:
+        _print(f"  {term.mark('info')} {'Full TeX'.ljust(13)} {term.dim('none found: optional, used automatically for documents that need Biber, an index, minted, newer packages (TeX Live or MiKTeX)')}")
+    gs = find_ghostscript()
+    if gs:
+        _print(f"  {term.mark('ok')} {'EPS images'.ljust(13)} Ghostscript {term.dim('at ' + gs)}")
+    else:
+        _print(f"  {term.mark('info')} {'EPS images'.ljust(13)} {term.dim('no Ghostscript: .eps files need a name-eps-converted-to.pdf next to them (optional: install Ghostscript)')}")
     _print(f"\n  {term.mark('ok')} {term.good('Everything is in place.')}\n" if ok else f"\n  {term.mark('warn')} {term.warn('Some things need attention.')}\n")
     return 0 if ok else 1
 

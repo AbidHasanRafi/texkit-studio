@@ -7,8 +7,9 @@ import { state, set, on, allIssues } from "./store.js";
 const FILTERS = [
   ["all", "All", () => true],
   ["error", "Errors", (i) => i.severity === "error"],
-  ["warning", "Warnings", (i) => i.severity === "warning" && i.category !== "references"],
+  ["warning", "Warnings", (i) => i.severity === "warning" && i.category !== "references" && i.category !== "language"],
   ["references", "References", (i) => i.category === "references"],
+  ["language", "Language", (i) => i.category === "language"],
   ["info", "Typesetting", (i) => i.category === "typesetting"],
 ];
 

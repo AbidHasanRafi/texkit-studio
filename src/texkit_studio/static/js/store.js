@@ -4,6 +4,8 @@ export const state = {
   session: null,        // /api/session payload
   tree: [],             // file tree
   mainFile: null,
+  mainSource: null,     // "chosen" | "main.tex" | "auto": how the main file was picked
+  mainCandidates: [],   // every complete document in the folder
   tabs: [],             // [{path, kind, doc, hash, dirty, readOnly, savedGen, gen}]
   active: null,         // active tab path
   compile: { status: "idle", issues: [], rev: 0, hasPdf: false },

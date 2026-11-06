@@ -187,6 +187,8 @@ export function initPdf(pane, { onCompile, onInverse }) {
     }
     pages.forEach((p) => { p.rendered = null; p.pending = null; });
     empty.classList.add("hidden");
+    emptyOpts = null;
+    renderBusy();
     capsule.classList.remove("hidden");
     layout();
     restore(a);
@@ -195,7 +197,22 @@ export function initPdf(pane, { onCompile, onInverse }) {
     return true;
   }
 
-  function showEmpty({ message = "Your PDF will appear here.", action = true } = {}) {
+  let emptyOpts = null;  // what the empty state last showed, so it can switch to "busy" and back
+
+  function renderEmpty() {
+    if (!emptyOpts) return;
+    const { message = "Your PDF will appear here.", action = true } = emptyOpts;
+    empty.replaceChildren(busy
+      ? h("div", { class: "inner" }, h("span", { class: "spinner lg" }), h("div", { class: "busy-text" }, busyLabel()),
+          h("div", { class: "busy-sub" }, "This can take a little longer the first time."))
+      : h("div", { class: "inner" },
+          icon("file-pdf", "lg"),
+          h("div", null, message),
+          action ? h("button", { class: "btn primary", onclick: onCompile }, icon("play", "fill"), "Compile") : null,
+        ));
+  }
+
+  function showEmpty(opts = {}) {
     loadSeq++;
     pages.forEach((p) => p.el.remove());
     pages = [];
@@ -203,11 +220,43 @@ export function initPdf(pane, { onCompile, onInverse }) {
     if (doc) { doc.destroy(); doc = null; }
     capsule.classList.add("hidden");
     empty.classList.remove("hidden");
-    empty.replaceChildren(h("div", { class: "inner" },
-      icon("file-pdf", "lg"),
-      h("div", null, message),
-      action ? h("button", { class: "btn primary", onclick: onCompile }, icon("play", "fill"), "Compile") : null,
-    ));
+    emptyOpts = opts;
+    renderEmpty();
+    renderBusy();
+  }
+
+  // ── Busy indicator: a spinner in the middle when there's no PDF yet, otherwise just a thin bar on the
+  //    top edge (the header already says "Compiling", so no second label over the pages) ──
+  let busy = null, busyStart = 0, busyTick;
+  const progress = h("div", { class: "pdf-progress hidden", "aria-hidden": "true" }, h("span"));
+  pane.append(progress);
+
+  function busyLabel() {
+    const s = Math.round((Date.now() - busyStart) / 1000);
+    return busy.elapsed && s >= 3 ? `${busy.text} ${s}s` : busy.text;
+  }
+
+  function renderBusy() {
+    progress.classList.toggle("hidden", !busy);
+    pane.classList.toggle("is-busy", !!busy);
+    pane.setAttribute("aria-busy", String(!!busy));
+  }
+
+  /** Show or clear the compiling state. `next` is `{ text, elapsed }` or null. */
+  function setBusy(next) {
+    const wasBusy = !!busy;
+    const changedText = busy && next && busy.text !== next.text;
+    busy = next;
+    clearInterval(busyTick);
+    if (busy) {
+      if (!wasBusy) busyStart = Date.now();
+      if (busy.elapsed) busyTick = setInterval(() => {
+        const t = empty.querySelector(".busy-text");
+        if (t) t.textContent = busyLabel();
+      }, 1000);
+    }
+    if (wasBusy !== !!busy || changedText) renderEmpty();
+    renderBusy();
   }
 
   function setBanner(text) {
@@ -233,5 +282,5 @@ export function initPdf(pane, { onCompile, onInverse }) {
 
   const pageCount = () => pages.length;
 
-  return { load, showEmpty, setBanner, highlight, pageCount, refresh: () => { layout(); renderVisible(); } };
+  return { load, showEmpty, setBusy, setBanner, highlight, pageCount, refresh: () => { layout(); renderVisible(); } };
 }

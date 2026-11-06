@@ -167,7 +167,11 @@ function renderTree() {
         h("span", { class: "twisty" }, isDir ? icon(open ? "chev-d" : "chev-r", "sm") : null),
         kindIcon(n),
         h("span", { class: "name" }, n.name),
-        n.path === state.mainFile ? h("span", { class: "badge", title: "This file is compiled" }, "main") : null,
+        n.path === state.mainFile ? h("span", { class: "badge", title: {
+          chosen: "This file is compiled. You chose it.",
+          "main.tex": "This file is compiled (it's named main.tex).",
+          auto: `This file is compiled. It was picked automatically from ${state.mainCandidates.length} documents; use ⋯ → Set as main file on another to change it.`,
+        }[state.mainSource] || "This file is compiled" }, "main") : null,
         errorsIn.has(n.path) ? h("span", { class: "err-dot", title: "Has errors" }) : null,
         h("button", { class: "icon-btn sm row-menu", "aria-label": `Actions for ${n.name}`, onclick: (e) => { e.stopPropagation(); rowMenu(e.currentTarget, n); } }, icon("more", "sm")),
       );
@@ -259,10 +263,17 @@ async function remove(n) {
   } catch (e) { toast(e.message, { kind: "error" }); }
 }
 
-async function setMain(path) {
-  try { await api.setMain(path); set({ mainFile: path }); toast(`${path} is now the main file.`, { kind: "ok" }); }
-  catch (e) { toast(e.message, { kind: "error" }); }
+export async function setMainFile(path) {
+  try {
+    const r = await api.setMain(path);
+    set({ mainFile: path, mainSource: "chosen", wantAnalysis: Date.now() });
+    toast(r.isDocument === false
+      ? `${path} is now the main file, but it has no \\documentclass, so it may be a chapter. Pick the file that includes it if it won't compile.`
+      : `${path} is now the main file. Compiling it…`, { kind: r.isDocument === false ? "info" : "ok", timeout: r.isDocument === false ? 8000 : 3000 });
+    document.dispatchEvent(new CustomEvent("texkit:compile"));  // the PDF should match the new main file
+  } catch (e) { toast(e.message, { kind: "error" }); }
 }
+const setMain = setMainFile;
 
 function pickUpload(dir) {
   uploadDir = dir;

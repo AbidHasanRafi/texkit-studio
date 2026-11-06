@@ -87,6 +87,22 @@ def main_candidates(root: Path) -> list[str]:
     return [rel for rel in tex_files(root) if is_document(root / rel)][:50]
 
 
+def main_info(root: Path) -> dict:
+    """The main file and how it was chosen.
+
+    source is "chosen" (the user set it), "main.tex" (a complete main.tex exists) or "auto" (the first
+    complete document: fewest folders deep, then alphabetical). `candidates` lists every complete
+    document, so the UI can tell when the automatic pick was a guess.
+    """
+    configured = load_settings(root).get("mainFile")
+    if isinstance(configured, str) and (root / configured).is_file():
+        return {"file": configured, "source": "chosen", "candidates": [configured]}
+    candidates = main_candidates(root)
+    if (root / "main.tex").is_file() and is_document(root / "main.tex"):
+        return {"file": "main.tex", "source": "main.tex", "candidates": candidates}
+    return {"file": candidates[0] if candidates else None, "source": "auto" if candidates else None, "candidates": candidates}
+
+
 def detect_main(root: Path) -> str | None:
     configured = load_settings(root).get("mainFile")
     if isinstance(configured, str) and (root / configured).is_file():

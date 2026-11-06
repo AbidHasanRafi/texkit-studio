@@ -13,7 +13,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from . import bibtex
+from . import bibtex, spelling
 from .project import detect_main, tex_files
 from .safefs import is_hidden
 
@@ -300,7 +300,7 @@ PREFIX = {"figure": "fig", "table": "tab", "equation": "eq", "section": "sec", "
           "algorithm": "alg", "listing": "lst", "theorem": "thm"}
 
 
-def analyse(root: Path) -> dict:
+def analyse(root: Path, spelling_pref: str | None = None) -> dict:
     root = root.resolve()
     main = detect_main(root)
     scan = Scan(root)
@@ -358,6 +358,8 @@ def analyse(root: Path) -> dict:
         cite_counts.setdefault(c.key, []).append(c)
 
     checks = _checks(scan, main, entries, ref_counts, cite_counts, missing_bibs)
+    language = spelling.check(root, scan.files, spelling_pref)
+    checks += language.pop("issues")
     label_keys = {lab.key for lab in scan.labels}
     entry_keys = {e.key for e in entries}
     nocite_all = "*" in cite_counts
@@ -378,6 +380,7 @@ def analyse(root: Path) -> dict:
         "graphics": [{**asdict(g), "resolved": _resolve_graphic(root, g, scan.graphic_paths)} for g in scan.graphics],
         "words": scan.words,
         "checks": checks,
+        "language": language,
     }
 
 

@@ -21,6 +21,15 @@ async function call(method, url, body) {
   return data;
 }
 
+// The spelling preference lives in the editor settings (localStorage). Read it here so every
+// analysis request carries it without each caller having to pass it along.
+function spellingQuery() {
+  try {
+    const v = JSON.parse(localStorage.getItem("texkit.settings") || "{}").spelling;
+    return v && v !== "auto" ? `?spelling=${enc(v)}` : "";
+  } catch { return ""; }
+}
+
 export const api = {
   session: () => call("GET", "/api/session"),
   setRoot: (path) => call("POST", "/api/session/root", { path }),
@@ -47,9 +56,13 @@ export const api = {
   cancel: () => call("POST", "/api/compile/cancel", {}),
   log: () => call("GET", "/api/log"),
   rawUrl: (path) => `/api/raw?path=${enc(path)}&t=${Date.now()}`,
-  analysis: () => call("GET", "/api/analysis"),
-  check: () => call("GET", "/api/check"),
+  analysis: () => call("GET", `/api/analysis${spellingQuery()}`),
+  check: () => call("GET", `/api/check${spellingQuery()}`),
   lookupCitation: (id) => call("POST", "/api/citations/lookup", { id }),
+  verifyCitation: (e) => call("POST", "/api/citations/verify", {
+    key: e.key, type: e.type || "", title: e.title || "", author: e.author || "", year: e.year || "",
+    doi: e.doi || "", url: e.url || "", eprint: e.eprint || "",
+  }),
   addCitation: (bibtex, file) => call("POST", "/api/citations/add", { bibtex, file }),
   syncForward: (file, line) => call("GET", `/api/synctex/forward?file=${enc(file)}&line=${line}`),
   syncInverse: (page, x, y) => call("GET", `/api/synctex/inverse?page=${page}&x=${x}&y=${y}`),

@@ -2,8 +2,9 @@
 
 import { api } from "./api.js";
 import { h, icon, dialog, promptDialog, toast, store, save } from "./dom.js";
-import { state } from "./store.js";
+import { state, set } from "./store.js";
 import { settings, saveSettings } from "./editor.js";
+import { setAutoVerify } from "./verify.js";
 
 // ── Theme ─────────────────────────────────────────────────────────────
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -158,6 +159,16 @@ function switchEl(checked, onChange, label) {
   return el;
 }
 
+function spellingSeg() {
+  const seg = h("div", { class: "segmented", role: "tablist", "aria-label": "Spelling" });
+  const options = [["auto", "Auto"], ["american", "US"], ["british", "UK"], ["off", "Off"]];
+  const render = () => seg.replaceChildren(...options.map(([k, l]) =>
+    h("button", { role: "tab", title: { auto: "Follow the document, or whichever you use most", american: "American English", british: "British English", off: "Don't check" }[k],
+      "aria-selected": String(settings.spelling === k), onclick: () => { saveSettings({ spelling: k }); render(); set({ wantAnalysis: Date.now() }); } }, l)));
+  render();
+  return seg;
+}
+
 function indentSeg() {
   const seg = h("div", { class: "segmented", role: "tablist", "aria-label": "Indentation" });
   const render = () => seg.replaceChildren(...[[2, "2 spaces"], [4, "4 spaces"]].map(([n, l]) =>
@@ -180,6 +191,9 @@ export function settingsDialog() {
     body: h("div", null,
       row("Appearance", null, themeSeg),
       row("Compile automatically", "A moment after you stop typing", switchEl(settings.autoCompile, (v) => saveSettings({ autoCompile: v }), "Compile automatically")),
+      row("Check references automatically", "Looks new and edited references up online (Crossref, OpenAlex…) and badges them. Sends their title, first author and DOI.",
+        switchEl(settings.autoVerify, (v) => setAutoVerify(v), "Check references automatically")),
+      row("Spelling", "US or UK English: mixed spellings are underlined. Auto follows the document or what you use most.", spellingSeg()),
       row("Wrap long lines", null, switchEl(settings.wrap, (v) => saveSettings({ wrap: v }), "Wrap long lines")),
       h("div", { class: "settings-head" }, "Formatting"),
       row("Format when I press Ctrl/⌘+S", "Tidies the file before compiling, like Prettier's format on save",

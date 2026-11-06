@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
-authors = [{ name = "TexKit Studio contributors" }]
+authors = [{ name = "Md. Abid Hasan Rafi" }]
 keywords = ["latex", "tex", "editor", "writing", "tectonic", "pdf", "overleaf"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -37,6 +37,11 @@ dependencies = [
   "pypandoc-binary>=1.13",
 ]
 
+[project.urls]
+Homepage = "https://github.com/AbidHasanRafi/texkit-studio"
+Repository = "https://github.com/AbidHasanRafi/texkit-studio"
+Issues = "https://github.com/AbidHasanRafi/texkit-studio/issues"
+
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
 
@@ -45,6 +50,9 @@ texkit = "texkit_studio.cli:main"
 
 [tool.hatch.version]
 path = "src/texkit_studio/_meta.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/build", "/docs", "/design", "/scripts/demo"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/texkit_studio"]

@@ -3,6 +3,7 @@ every package they need. Afterwards those documents compile with no internet."""
 
 from __future__ import annotations
 
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -27,7 +28,8 @@ def prepare(progress: Callable[[int, int, str], None] | None = None) -> list[dic
             cmd = tectonic.command(exe, folder / main, out)
             cmd[1:1] = ["--color", "never", "-Z", "continue-on-errors"]
             proc = subprocess.run(cmd, cwd=folder, capture_output=True, text=True, encoding="utf-8",
-                                  errors="replace", timeout=900, **tectonic.no_window())
+                                  errors="replace", timeout=900, env={**os.environ, **tectonic.environment()},
+                                  **tectonic.no_window())
             ok = (out / Path(main).with_suffix(".pdf").name).is_file()
             results.append({"template": t["name"], "ok": ok, "detail": "" if ok else proc.stdout[-400:] + proc.stderr[-400:]})
     if progress:

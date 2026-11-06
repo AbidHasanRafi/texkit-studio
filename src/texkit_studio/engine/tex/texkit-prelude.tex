@@ -1,0 +1,109 @@
+% TexKit Studio prelude: loaded before your document, so templates written for pdfLaTeX run
+% under Tectonic (XeTeX). It changes nothing that already works; each part only acts when your
+% document uses the feature it covers. Set TEXKIT_NO_PRELUDE=1 to compile without it.
+\ifdefined\texkit@prelude\endinput\fi
+\makeatletter
+\def\texkit@prelude{1}
+\def\texkit@note#1{\typeout{TEXKIT-NOTE: #1}}
+
+%% 1. pdfTeX settings that XeTeX doesn't have --------------------------------------------------
+%% Preambles for arXiv, IEEE and others set these; XeTeX stops with "Undefined control sequence".
+%% Only inert settings are defined. \pdftexversion and friends stay undefined on purpose:
+%% packages test for them to detect pdfTeX and would then take the wrong code path.
+\def\texkit@count#1{\ifdefined#1\else\newcount#1\fi}
+\def\texkit@dimen#1{\ifdefined#1\else\newdimen#1\fi}
+\texkit@count\pdfminorversion        \texkit@count\pdfobjcompresslevel
+\texkit@count\pdfcompresslevel       \texkit@count\pdfgentounicode
+\texkit@count\pdfsuppresswarningpagegroup  \texkit@count\pdfinclusionerrorlevel
+\texkit@count\pdfdecimaldigits       \texkit@count\pdfpkresolution
+\texkit@dimen\pdfhorigin             \texkit@dimen\pdfvorigin
+\ifdefined\pdfglyphtounicode\else\def\pdfglyphtounicode#1#2{}\fi
+\ifdefined\pdfinfo\else\def\pdfinfo#1{}\fi
+\ifdefined\pdfcatalog\else\def\pdfcatalog#1{}\fi
+\ifdefined\pdfpageattr\else\def\pdfpageattr#1{}\fi
+\ifdefined\pdfpagesattr\else\def\pdfpagesattr#1{}\fi
+\ifdefined\pdfpageresources\else\def\pdfpageresources#1{}\fi
+
+%% 2. Driver options -----------------------------------------------------------------------------
+%% [pdftex], [dvips] and so on make hyperref, graphicx and xcolor load a driver that doesn't
+%% work under XeTeX. Replace them with [xetex] before the package reads its options.
+\newif\iftexkit@drv \newif\iftexkit@changed
+% Remove spaces from the option in \texkit@o. (\zap@space needs a real space after its argument,
+% which only a macro parameter can provide: TeX drops the space after a control word.)
+\def\texkit@zap#1{\edef\texkit@o{\zap@space#1 \@empty}}
+\def\texkit@clean{\expandafter\texkit@zap\expandafter{\texkit@o}}
+\def\texkit@isdriver{%
+  \texkit@drvfalse
+  \@for\texkit@d:=pdftex,dvips,dvipdfm,dvipdfmx,luatex,dvisvgm\do{\ifx\texkit@o\texkit@d\texkit@drvtrue\fi}}
+\def\texkit@rewriteopts#1{%
+  \@ifundefined{opt@#1.sty}{}{%
+    \let\texkit@new\@empty \texkit@changedfalse \let\texkit@xe\@empty
+    \expandafter\@for\expandafter\texkit@o\expandafter:\expandafter=\csname opt@#1.sty\endcsname\do{%
+      \texkit@clean
+      \texkit@isdriver
+      \iftexkit@drv
+        \texkit@changedtrue
+        \ifx\texkit@xe\@empty \def\texkit@xe{xetex}%
+          \edef\texkit@new{\ifx\texkit@new\@empty\else\texkit@new,\fi xetex}\fi
+      \else
+        \ifx\texkit@o\@empty\else
+          \edef\texkit@new{\ifx\texkit@new\@empty\else\texkit@new,\fi\unexpanded\expandafter{\texkit@o}}%
+        \fi
+      \fi}%
+    \iftexkit@changed
+      \expandafter\let\csname opt@#1.sty\endcsname\texkit@new
+      \typeout{TexKit: #1 driver option replaced by xetex}%
+    \fi}}
+\def\texkit@fixdriver#1{\AddToHook{file/before/#1.sty}{\texkit@rewriteopts{#1}}}
+\texkit@fixdriver{hyperref} \texkit@fixdriver{graphicx} \texkit@fixdriver{graphics}
+\texkit@fixdriver{color}    \texkit@fixdriver{xcolor}
+
+%% 3. biblatex without Biber ---------------------------------------------------------------------
+%% Biblatex uses Biber unless told otherwise, and the built-in engine can only run BibTeX.
+%% Switch the backend (explicit backend=biber included). Features that need Biber won't work.
+\newif\iftexkit@backend
+\def\texkit@bibtexbackend{%
+  \@ifundefined{opt@biblatex.sty}{\def\opt@biblatex.sty{}}{}%
+  \let\texkit@new\@empty \texkit@backendfalse
+  \expandafter\@for\expandafter\texkit@o\expandafter:\expandafter=\csname opt@biblatex.sty\endcsname\do{%
+    \texkit@clean
+    \def\texkit@a{backend=biber}%
+    \ifx\texkit@o\texkit@a \def\texkit@o{backend=bibtex}\fi
+    \def\texkit@a{backend=bibtex}%
+    \ifx\texkit@o\texkit@a \texkit@backendtrue\fi
+    \ifx\texkit@o\@empty\else
+      \edef\texkit@new{\ifx\texkit@new\@empty\else\texkit@new,\fi\unexpanded\expandafter{\texkit@o}}%
+    \fi}%
+  \iftexkit@backend\else
+    \edef\texkit@new{\ifx\texkit@new\@empty\else\texkit@new,\fi backend=bibtex}%
+  \fi
+  \expandafter\let\csname opt@biblatex.sty\endcsname\texkit@new
+  \texkit@note{biblatex uses the BibTeX backend, because Biber isn't available in the built-in engine}}
+\AddToHook{file/before/biblatex.sty}{\texkit@bibtexbackend}
+
+%% 4. Unicode text with 8-bit fonts ------------------------------------------------------------
+%% XeTeX ignores inputenc, so with T1/OT1 fonts "š" is missing and Latin-1 characters such as
+%% "×" print the wrong glyph. Each character in the table below becomes an active character that
+%% prints the same text as pdfLaTeX would (\v{s}); with Unicode fonts (fontspec, ctex) it prints
+%% the character itself. The table is generated by scripts/gen_unicode_table.py.
+\def\texkit@TU{TU}
+\protected\def\texkit@u#1#2{%
+  \ifx\f@encoding\texkit@TU \Uchar"#1\relax
+  \else\ifmmode\mbox{#2}\else#2\fi\fi}
+\def\texkit@all{}
+\def\texkit@uchar#1#2{%
+  \expandafter\xdef\csname texkit@cc@#1\endcsname{\the\catcode"#1}% remember the original catcode
+  \xdef\texkit@all{\texkit@all#1,}%
+  \catcode"#1=\active
+  \begingroup\uccode`\~="#1\relax
+  \uppercase{\endgroup\protected\def~}{\texkit@u{#1}{#2}}}
+\input{texkit-unicode}
+% Packages that build names from, or give their own meaning to, these characters (xeCJK, ctex,
+% polyglossia, unicode-math, ...) need them as ordinary characters again.
+\def\texkit@deactivate{%
+  \@for\texkit@h:=\texkit@all\do{%
+    \ifx\texkit@h\@empty\else\catcode"\texkit@h=\csname texkit@cc@\texkit@h\endcsname\relax\fi}}
+\def\texkit@yield#1{\AddToHook{package/#1/before}{\texkit@deactivate}}
+\texkit@yield{xeCJK} \texkit@yield{polyglossia} \texkit@yield{ucharclasses}
+\texkit@yield{unicode-math} \texkit@yield{xunicode} \texkit@yield{luatexja}
+\makeatother

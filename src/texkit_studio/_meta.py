@@ -7,4 +7,4 @@ APP_DIR_NAME = "texkit-studio"  # folder name for user data and cache
 PROJECT_DIR = ".texkit"  # per-project settings folder
 TAGLINE = "Write papers freely. Compile without limits."
 
-__version__ = "0.1.0"
+__version__ = "0.1.2"

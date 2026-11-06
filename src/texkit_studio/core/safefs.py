@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
+import time
 from pathlib import Path, PurePosixPath
 
 TEXT_EXTENSIONS = {
@@ -53,10 +54,31 @@ def atomic_write(path: Path, data: bytes) -> None:
                 os.chmod(tmp, path.stat().st_mode)
             except OSError:
                 pass
-        os.replace(tmp, path)
+        _replace(tmp, path, data)
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
         raise
+
+
+def _replace(tmp: str, path: Path, data: bytes) -> None:
+    """Move the finished temporary file over `path`.
+
+    On Windows that fails with "Access is denied" while another program has the target open: the LaTeX engine reading
+    main.tex during a compile, a virus scanner, a backup tool. Those holds are short, so wait for them; if the file is
+    still held, write it in place (which such programs allow) rather than lose what the user typed."""
+    delay = 0.03
+    for attempt in range(8):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if attempt == 7:
+                break
+            time.sleep(delay)
+            delay = min(delay * 2, 0.4)
+    with open(path, "wb") as fh:  # raises PermissionError itself if the file is truly locked or read-only
+        fh.write(data)
+    Path(tmp).unlink(missing_ok=True)
 
 
 def file_kind(path: Path) -> str:

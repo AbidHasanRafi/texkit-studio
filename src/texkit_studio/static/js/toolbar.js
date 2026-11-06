@@ -6,6 +6,7 @@ import { state, set, on, allIssues } from "./store.js";
 import { settings, saveSettings } from "./editor.js";
 import { applyTheme, themePref, settingsDialog } from "./dialogs.js";
 import { revealLabel } from "./sidebar.js";
+import { verifyDialog, summary, run } from "./verify.js";
 
 export function initToolbar(header, a) {
   const nameEl = h("span", { class: "name" }, "…");
@@ -29,7 +30,10 @@ export function initToolbar(header, a) {
 
   const settingsBtn = h("button", { class: "icon-btn tb-extra", title: "Settings", "aria-label": "Settings", onclick: settingsDialog }, icon("sliders"));
   const checkBtn = h("button", { class: "dl-btn tb-extra", title: "Check everything before you submit", onclick: a.check }, icon("checklist"), h("span", { class: "tb-label" }, "Check"));
-  const paletteBtn = h("button", { class: "icon-btn tb-extra", title: `All commands (${kbd("Mod-K")})`, "aria-label": "All commands", onclick: a.palette }, icon("command"));
+  const refMark = h("span", { class: "ref-mark" });
+  const refBtn = h("button", { class: "dl-btn tb-extra ref-btn hidden", onclick: () => verifyDialog() },
+    icon("check-circle"), h("span", { class: "tb-label" }, "References"), refMark);
+  const paletteBtn =h("button", { class: "icon-btn tb-extra", title: `All commands (${kbd("Mod-K")})`, "aria-label": "All commands", onclick: a.palette }, icon("command"));
 
   const mainLabel = h("span", { class: "tb-label" }, "Compile");
   const mainIcon = h("span", { style: { display: "contents" } }, icon("play", "fill"));
@@ -41,6 +45,7 @@ export function initToolbar(header, a) {
   moreBtn.addEventListener("click", () => toggleMenu(moreBtn, () => [
     { heading: "Download" }, ...downloadItems(), "sep",
     { label: "All commands…", icon: "command", kbd: "Mod-K", onSelect: a.palette },
+    { label: "Check references…", icon: "check-circle", onSelect: () => verifyDialog() },
     { label: "Version history…", icon: "history", onSelect: a.history },
     { label: "Recompile from scratch", icon: "refresh", onSelect: () => a.compile({ clean: true }) },
     { label: `Auto-compile`, checked: settings.autoCompile, onSelect: () => saveSettings({ autoCompile: !settings.autoCompile }) },
@@ -53,7 +58,7 @@ export function initToolbar(header, a) {
   header.append(
     h("div", { class: "tb-left" }, sideBtn, logo(), folderBtn),
     seg,
-    h("div", { class: "tb-right" }, pill, checkBtn, dlBtn, paletteBtn, themeBtn, settingsBtn,
+    h("div", { class: "tb-right" }, pill, refBtn, checkBtn, dlBtn, paletteBtn, themeBtn, settingsBtn,
       h("div", { class: "compile-btn" }, compileMain, compileMore), moreBtn),
   );
 
@@ -151,6 +156,31 @@ export function initToolbar(header, a) {
     pill.setAttribute("aria-label", text);
     mainIcon.replaceChildren(state.compiling ? h("span", { class: "spinner" }) : icon("play", "fill"));
     mainLabel.textContent = state.compiling ? "Compiling" : "Compile";
+    compileMain.setAttribute("aria-disabled", String(!!state.compiling));  // clicks are ignored while compiling
+  }
+
+  // Reference check: hidden without a bibliography; otherwise a count of problems, or a tick when all verified.
+  function renderRefs() {
+    const s = summary();
+    refBtn.classList.toggle("hidden", !s.total);
+    if (!s.total) return;
+    const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    let cls = "", content = null, tip = "Check that your references are real, have the right DOI, and aren't retracted";
+    if (run.running) {
+      cls = "busy"; content = h("span", { class: "spinner" }); tip = `Checking references… ${run.done} of ${run.total}`;
+    } else if (s.bad) {
+      cls = "bad"; content = String(s.bad); tip = `${plural(s.bad, "reference")} with a problem (retracted, wrong or invented DOI). Click for details.`;
+    } else if (s.warn) {
+      cls = "warn"; content = String(s.warn); tip = `${plural(s.warn, "reference")} to double-check. Click for details.`;
+    } else if (s.checked === s.total) {
+      cls = "ok"; content = icon("check", "sm"); tip = `All ${s.total} references verified${s.info ? `, ${plural(s.info, "suggestion")}` : ""}.`;
+    } else if (s.checked) {
+      tip = `${s.checked} of ${s.total} references checked. Click to check the rest.`;
+    }
+    refBtn.title = tip;
+    refBtn.setAttribute("aria-label", `References: ${tip}`);
+    refMark.className = `ref-mark ${cls}${content ? "" : " hidden"}`;
+    refMark.replaceChildren(...(content ? [content] : []));
   }
 
   function renderLayout() {
@@ -167,6 +197,8 @@ export function initToolbar(header, a) {
 
   on(["compile", "compiling", "engineProgress", "analysis"], renderStatus);
   on(["layout", "pane"], renderLayout);
+  on(["refcheck", "analysis", "session"], renderRefs);
+  renderRefs();
   on(["session"], renderName);
   window.matchMedia("(max-width: 1023px)").addEventListener("change", renderLayout);
   renderStatus();

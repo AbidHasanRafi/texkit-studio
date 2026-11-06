@@ -4,6 +4,7 @@ import { api } from "./api.js";
 import { h, icon, dialog, toast } from "./dom.js";
 import { state } from "./store.js";
 import * as editor from "./editor.js";
+import { verifyDialog } from "./verify.js";
 
 export async function checkDialog({ pageCount, onCompile, onDownload } = {}) {
   const body = h("div", { class: "ck" }, h("div", { class: "fb-empty" }, h("span", { class: "spinner" }), " Checking your document…"));
@@ -54,7 +55,21 @@ export async function checkDialog({ pageCount, onCompile, onDownload } = {}) {
   const entries = a.bibliography.entries.length;
   add(uncited.length ? "warn" : "ok", uncited.length ? `${uncited.length} bibliography entr${uncited.length === 1 ? "y is" : "ies are"} never cited` : entries ? `All ${entries} bibliography entries are cited` : "No bibliography entries",
     uncited.length ? "Cite them in the text, or remove them from the .bib file." : "", uncited);
-  const bibProblems = [...by("no-bibliography"), ...by("bib-file-missing"), ...by("bib-duplicate"), ...by("label-duplicate")];
+  // Spelling: American and British variants shouldn't be mixed.
+  const spell = by("spelling-variant");
+  const lang = a.language || {};
+  const variant = { american: "American", british: "British" }[lang.dialect];
+  if (spell.length) {
+    const n = spell.filter((c) => c.file).length;
+    add("warn", `Mixed American and British spelling (${n} word${n === 1 ? "" : "s"})`,
+      `${{ setting: `Your spelling setting is ${variant} English`, document: `The document is set to ${variant} English` }[lang.source] || `Most of your text is ${variant}`}. Click a word to see it, or use the Language filter in the issues panel to fix each with one click.`,
+      spell.filter((c) => c.file));
+  } else if (variant && (lang.us || lang.uk || lang.ise || lang.ize)) {
+    add("ok", `Spelling is consistently ${variant} English`, "");
+  }
+  if (entries) add("info", "Are your references real, and not retracted?", "Looks each one up in Crossref, OpenAlex and others to catch invented, mistyped or retracted references. Needs internet.", [],
+    { label: "Check references online…", run: () => { d.close(); verifyDialog(); } });
+  const bibProblems =[...by("no-bibliography"), ...by("bib-file-missing"), ...by("bib-duplicate"), ...by("label-duplicate")];
   if (bibProblems.length) add("bad", "Bibliography and label problems", "", bibProblems);
   const missingFiles = [...by("graphic-missing"), ...by("input-missing")];
   if (missingFiles.length) add("bad", `${missingFiles.length} missing file${missingFiles.length === 1 ? "" : "s"}`, "", missingFiles);
