@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TexKit Studio: write papers freely, compile without limits</title>
+<meta name="description" content="TexKit Studio is an open-source LaTeX writing studio that runs in your browser, on your own computer. No TeX installation, no account, no compile limits, and nothing is uploaded.">
+<meta name="theme-color" content="#1D6A72">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preload" href="assets/fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/source-serif-4-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/motion.css">
+<script>(function(){try{var t=localStorage.getItem('texkit-site-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<script src="assets/vendor/tailwind-browser.js"></script>
+<style type="text/tailwindcss">
+@theme inline {
+  --color-window: var(--bg-window); --color-surface: var(--bg-surface); --color-card: var(--bg-card); --color-code: var(--bg-code);
+  --color-ink: var(--text-primary); --color-muted: var(--text-secondary); --color-faint: var(--text-tertiary);
+  --color-line: var(--separator); --color-hover: var(--fill-hover);
+  --color-accent: var(--accent); --color-accent-soft: var(--accent-soft); --color-btn: var(--btn); --color-btn-hover: var(--btn-hover);
+  --color-ok: var(--success); --color-ok-soft: var(--success-soft); --color-bad: var(--danger); --color-bad-soft: var(--danger-soft);
+  --color-warn: var(--warning); --color-warn-soft: var(--warning-soft);
+  --font-sans: var(--font-ui); --font-mono: var(--font-mono);
+  --shadow-card: var(--shadow-2); --shadow-pop: var(--shadow-3);
+}
+</style>
+</head>
+<body data-page="home">
+<div id="site-header"></div>
+
+<main>
+  <!-- Hero: one screen, text on the left and the live scene on the right -->
+  <section class="bg-surface">
+    <div class="mx-auto grid min-h-[calc(100svh-3rem)] max-w-6xl items-center gap-10 px-5 py-10 grid-cols-[minmax(0,1fr)] lg:grid-cols-[1.12fr_.88fr] lg:gap-6 lg:py-6">
+      <div class="reveal min-w-0">
+        <a data-latest-link href="releases.html" class="inline-flex max-w-full items-center gap-2 rounded-full bg-window py-1 pl-1 pr-3 text-[.82rem] transition hover:bg-hover">
+          <span class="rounded-full bg-btn px-2.5 py-0.5 text-[.68rem] font-semibold uppercase tracking-wider text-white">New</span>
+          <span class="truncate">Version <b class="font-semibold" data-latest-version>0.1.2</b> is here</span>
+          <i data-icon="chevron-right" class="h-4 w-4 flex-none text-accent"></i>
+        </a>
+        <h1 class="mt-6 text-[clamp(2.3rem,3.6vw,3rem)] font-semibold leading-[1.06] tracking-[-0.035em] max-lg:text-[clamp(2rem,8.5vw,3rem)]">Write papers freely.<br><span class="text-accent">Compile without limits.</span></h1>
+        <p class="mt-5 max-w-md text-[1.15rem] leading-snug text-muted">An open-source LaTeX studio for your own computer. No account, no limits, nothing uploaded.</p>
+
+        <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <a href="docs.html#install" class="inline-flex items-center rounded-full bg-btn px-6 py-2.5 text-[.95rem] font-medium text-white transition hover:bg-btn-hover">Get started</a>
+          <a data-latest-link href="releases.html" class="inline-flex items-center gap-1 text-[.97rem] font-medium text-accent hover:underline">What's new <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </div>
+
+        <div data-install class="mt-8 inline-flex max-w-full items-center gap-1 rounded-full bg-window p-1.5 pr-2">
+          <div class="flex items-center gap-0.5" role="tablist" aria-label="Install with">
+            <button type="button" role="tab" data-install-tab="pipx install texkit-studio" aria-selected="true" class="rounded-full px-3 py-1 text-[.78rem] font-medium text-muted transition hover:text-ink aria-selected:bg-surface aria-selected:text-ink">pipx</button>
+            <button type="button" role="tab" data-install-tab="pip install texkit-studio" aria-selected="false" class="rounded-full px-3 py-1 text-[.78rem] font-medium text-muted transition hover:text-ink aria-selected:bg-surface aria-selected:text-ink">pip</button>
+          </div>
+          <code class="min-w-0 overflow-x-auto whitespace-nowrap px-3 text-[.88rem]" data-install-cmd>pipx install texkit-studio</code>
+          <button type="button" data-install-copy data-copy="pipx install texkit-studio" class="copy-btn grid h-7 w-7 flex-none place-items-center rounded-full text-muted transition hover:bg-hover hover:text-ink" aria-label="Copy the install command"><i data-icon="copy" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+
+      <!-- The scene: typing, compiling, checking references, fixing a spelling. It loops, and it is decoration only. -->
+      <div class="reveal" style="--d:.15s">
+        <div class="hero-stage" aria-hidden="true">
+          <div class="hs-window">
+            <div class="hs-bar"><i></i><i></i><i></i><span>main.tex</span>
+              <b class="hs-pill"><span class="hs-p1">Compiling…</span><span class="hs-p2">Compiled · 1.9 s</span></b></div>
+            <div class="hs-body">
+              <div class="hs-code">
+                <div class="hs-ln"><i>1</i><span class="hs-t hs-t1"><span class="k">\section</span>{Results}</span></div>
+                <div class="hs-ln"><i>2</i><span class="hs-t hs-t2">We <span class="hs-word"><u class="hs-uk">analyse</u><u class="hs-us">analyze</u></span> how reviewers</span></div>
+                <div class="hs-ln"><i>3</i><span class="hs-t hs-t3">judge a paper and the colour</span></div>
+                <div class="hs-ln"><i>4</i><span class="hs-t hs-t4">of a figure~<span class="k">\ref</span>{fig:flow}.</span></div>
+              </div>
+              <div class="hs-pdf"><div class="hs-page">
+                <div class="hs-h"></div>
+                <i class="hs-l" style="--w:100%"></i><i class="hs-l" style="--w:94%"></i><i class="hs-l" style="--w:98%"></i>
+                <i class="hs-fig"></i>
+                <i class="hs-l" style="--w:90%"></i><i class="hs-l" style="--w:62%"></i><i class="hs-l" style="--w:80%"></i>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="hs-float hs-spell"><div class="hs-card">
+            <strong>“analyze” is American spelling</strong>
+            <p>Most of your text is British.</p>
+            <span class="hs-btn"><span class="hs-b1">Change to analyse</span><span class="hs-b2">Fixed ✓</span></span>
+          </div></div>
+
+          <div class="hs-float f2 hs-refs"><div class="hs-card">
+            <div class="hs-head">Check references<small><span class="hs-s1">Checking…</span><span class="hs-s2">2 problems · 1 suggestion</span></small></div>
+            <div class="hs-row"><b>Deep learning</b><span class="hs-slot"><i class="sp"></i><span class="badge ok">Verified</span></span></div>
+            <div class="hs-row"><b>Stimulus-triggering fate…</b><span class="hs-slot"><i class="sp"></i><span class="badge bad">Retracted</span></span></div>
+            <div class="hs-row"><b>Neural Citation Networks…</b><span class="hs-slot"><i class="sp"></i><span class="badge bad">DOI not found</span></span></div>
+            <div class="hs-row"><b>Attention Is All You Need</b><span class="hs-slot"><i class="sp"></i><span class="badge info">No DOI</span></span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product shot -->
+  <section class="bg-window">
+    <div class="mx-auto max-w-6xl px-5 py-16 lg:py-24">
+      <div class="frame reveal">
+        <div class="frame-bar"><i></i><i></i><i></i></div>
+        <img class="only-light" src="assets/img/app-light.webp" width="2880" height="1800" alt="TexKit Studio in light mode: the file tree, the LaTeX editor and the live PDF preview side by side, with a badge on every reference.">
+        <img class="only-dark" src="assets/img/app-dark.webp" width="2880" height="1800" alt="TexKit Studio in dark mode: the file tree, the LaTeX editor and the live PDF preview side by side, with a badge on every reference.">
+      </div>
+    </div>
+  </section>
+
+  <!-- Why -->
+  <section class="bg-surface">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-24">
+      <h2 class="reveal text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem]">Everything for the paper.</h2>
+      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.05s">
+          <div class="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-surface text-accent"><i data-icon="package" class="h-5 w-5"></i></div>
+          <h3 class="font-semibold tracking-tight">Nothing to set up</h3>
+          <p class="mt-1.5 text-[.95rem] text-muted">One pip install. Engine and packages included.</p>
+        </article>
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.12s">
+          <div class="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-surface text-accent"><i data-icon="infinity" class="h-5 w-5"></i></div>
+          <h3 class="font-semibold tracking-tight">Unlimited compiles</h3>
+          <p class="mt-1.5 text-[.95rem] text-muted">No time limit, no queue. Works offline.</p>
+        </article>
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.19s">
+          <div class="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-surface text-accent"><i data-icon="lock" class="h-5 w-5"></i></div>
+          <h3 class="font-semibold tracking-tight">Private</h3>
+          <p class="mt-1.5 text-[.95rem] text-muted">Your files never leave your computer.</p>
+        </article>
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.26s">
+          <div class="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-surface text-accent"><i data-icon="clipboard-check" class="h-5 w-5"></i></div>
+          <h3 class="font-semibold tracking-tight">Built for papers</h3>
+          <p class="mt-1.5 text-[.95rem] text-muted">Figures, citations and a submission check.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature: reference verification -->
+  <section class="bg-window">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-28">
+      <div class="grid items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div class="reveal">
+          <span class="badge info">New in <span data-latest-version>0.1.2</span></span>
+          <h2 class="mt-4 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.08]">Know every reference is real.</h2>
+          <p class="mt-4 text-[1.1rem] leading-snug text-muted">Look up every entry in Crossref, OpenAlex and arXiv. Spot invented, wrong and retracted references.</p>
+          <ul class="mt-5 space-y-2 text-[.97rem]">
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>Invented or wrong DOIs</li>
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>Retractions and corrections</li>
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>Missing DOIs, added in one click</li>
+          </ul>
+          <a href="docs.html#reference-check" class="mt-6 inline-flex items-center gap-1 font-medium text-accent hover:underline">Learn more <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </div>
+        <div class="frame reveal" style="--d:.12s">
+          <img class="only-light" src="assets/img/reference-check-crop.webp" width="1720" height="940" loading="lazy" alt="The Check references online dialog: 3 problems, 1 to check, 1 suggestion and 2 verified, with a retracted paper and an invented DOI at the top.">
+          <img class="only-dark" src="assets/img/reference-check-crop-dark.webp" width="1720" height="940" loading="lazy" alt="The Check references online dialog in dark mode: 3 problems, 1 to check, 1 suggestion and 2 verified, with a retracted paper and an invented DOI at the top.">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature: spelling -->
+  <section class="bg-surface">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-28">
+      <div class="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+        <div class="order-2 lg:order-1">
+          <div class="frame reveal">
+            <img class="only-light" src="assets/img/spelling-crop.webp" width="1220" height="1660" loading="lazy" alt="The issues panel filtered to Language: 'analyze' and 'behavior' are flagged as American spellings in a mostly British text, each with a one-click fix.">
+            <img class="only-dark" src="assets/img/spelling-crop-dark.webp" width="1220" height="1660" loading="lazy" alt="The issues panel in dark mode filtered to Language: 'analyze' and 'behavior' are flagged as American spellings in a mostly British text, each with a one-click fix.">
+          </div>
+        </div>
+        <div class="order-1 reveal lg:order-2" style="--d:.1s">
+          <span class="badge info">New in <span data-latest-version>0.1.2</span></span>
+          <h2 class="mt-4 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.08]">One spelling, all the way through.</h2>
+          <p class="mt-4 text-[1.1rem] leading-snug text-muted">Mixed US and UK spelling is underlined and fixed in one click.</p>
+          <ul class="mt-5 space-y-2 text-[.97rem]">
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>Auto, US, UK or Off in Settings</li>
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>Maths, code and names are ignored</li>
+          </ul>
+          <a href="docs.html#spelling" class="mt-6 inline-flex items-center gap-1 font-medium text-accent hover:underline">Learn more <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature: main file -->
+  <section class="bg-window">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-28">
+      <div class="grid items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
+        <div class="reveal">
+          <span class="badge info">New in <span data-latest-version>0.1.2</span></span>
+          <h2 class="mt-4 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.08]">You choose which file compiles.</h2>
+          <p class="mt-4 text-[1.1rem] leading-snug text-muted">Set any .tex file, in any folder, as the main one from its ⋯ menu.</p>
+          <a href="docs.html#main-file" class="mt-6 inline-flex items-center gap-1 font-medium text-accent hover:underline">Learn more <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </div>
+        <div class="reveal rounded-3xl bg-surface p-8 sm:p-10" style="--d:.12s">
+          <div class="frame mx-auto max-w-sm">
+            <img class="only-light" src="assets/img/main-file.webp" width="920" height="660" loading="lazy" alt="The file tree with a right-click menu on supplement.tex offering Open, Set as main file, Rename and Show in Explorer.">
+            <img class="only-dark" src="assets/img/main-file-dark.webp" width="920" height="660" loading="lazy" alt="The file tree in dark mode with a right-click menu on supplement.tex offering Open, Set as main file, Rename and Show in Explorer.">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature: submission check -->
+  <section class="bg-surface">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-28">
+      <div class="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+        <div class="order-2 lg:order-1">
+          <div class="frame reveal">
+            <img class="only-light" src="assets/img/submission-check.webp" width="1816" height="1536" loading="lazy" alt="The Submission check: pages, words, abstract words, figures, tables and sources cited, followed by a checklist of what is left.">
+            <img class="only-dark" src="assets/img/submission-check-dark.webp" width="1816" height="1536" loading="lazy" alt="The Submission check in dark mode: pages, words, abstract words, figures, tables and sources cited, followed by a checklist of what is left.">
+          </div>
+        </div>
+        <div class="order-1 reveal lg:order-2" style="--d:.1s">
+          <h2 class="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.08]">Check before you submit.</h2>
+          <p class="mt-4 text-[1.1rem] leading-snug text-muted">One list of what is left, with the page and word counts.</p>
+          <ul class="mt-5 space-y-2 text-[.97rem]">
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>Errors, margins and uncited sources</li>
+            <li class="flex gap-2.5"><i data-icon="circle-check" class="mt-0.5 h-5 w-5 flex-none text-accent"></i>PDF, Word, ZIP or a submission package</li>
+          </ul>
+          <a href="docs.html#submission-check" class="mt-6 inline-flex items-center gap-1 font-medium text-accent hover:underline">Learn more <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest updates -->
+  <section id="updates" class="bg-window">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-28">
+      <div class="reveal flex flex-wrap items-end justify-between gap-4">
+        <h2 class="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem]">Latest updates.</h2>
+        <a href="releases.html" class="inline-flex items-center gap-1 font-medium text-accent hover:underline">All releases <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+      </div>
+      <div id="updates-feed" class="mt-10 space-y-6"></div>
+    </div>
+  </section>
+
+  <!-- Get started -->
+  <section class="bg-surface">
+    <div class="mx-auto max-w-6xl px-5 py-20 lg:py-24">
+      <h2 class="reveal text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem]">From install to PDF in a minute.</h2>
+      <div class="mt-10 grid gap-4 md:grid-cols-3">
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.05s">
+          <div class="mb-4 grid h-8 w-8 place-items-center rounded-full bg-btn text-sm font-semibold text-white">1</div>
+          <h3 class="font-semibold tracking-tight">Install</h3>
+          <pre class="mt-4 overflow-x-auto rounded-xl bg-surface px-4 py-3 text-[.85rem]">pipx install texkit-studio</pre>
+        </article>
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.12s">
+          <div class="mb-4 grid h-8 w-8 place-items-center rounded-full bg-btn text-sm font-semibold text-white">2</div>
+          <h3 class="font-semibold tracking-tight">Open your folder</h3>
+          <pre class="mt-4 overflow-x-auto rounded-xl bg-surface px-4 py-3 text-[.85rem]">cd ~/papers/my-thesis
+texkit</pre>
+        </article>
+        <article class="reveal rounded-3xl bg-window p-6" style="--d:.19s">
+          <div class="mb-4 grid h-8 w-8 place-items-center rounded-full bg-btn text-sm font-semibold text-white">3</div>
+          <h3 class="font-semibold tracking-tight">Write</h3>
+          <p class="mt-3 text-[.95rem] text-muted">The PDF follows your typing.</p>
+          <a href="docs.html#quick-start" class="mt-3 inline-flex items-center gap-1 text-[.95rem] font-medium text-accent hover:underline">Quick start <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy and call to action -->
+  <section class="bg-window">
+    <div class="mx-auto max-w-6xl px-5 py-20 text-center lg:py-28">
+      <div class="reveal">
+        <div class="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-surface text-accent"><i data-icon="lock" class="h-7 w-7"></i></div>
+        <h2 class="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem]">Your paper stays on your computer.</h2>
+        <p class="mx-auto mt-4 max-w-lg text-[1.1rem] leading-snug text-muted">Only actions you start, like checking references, go online.</p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          <a href="docs.html#install" class="inline-flex items-center rounded-full bg-btn px-6 py-2.5 text-[.95rem] font-medium text-white transition hover:bg-btn-hover">Install TexKit Studio</a>
+          <a href="docs.html#privacy" class="inline-flex items-center gap-1 text-[.97rem] font-medium text-accent hover:underline">Privacy and safety <i data-icon="chevron-right" class="h-4 w-4"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+<script src="assets/js/releases.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

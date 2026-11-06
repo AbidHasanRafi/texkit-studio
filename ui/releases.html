@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Releases · TexKit Studio</title>
+<meta name="description" content="Release notes for TexKit Studio: what is new in the latest version, what changed in earlier ones, and the files with their checksums.">
+<meta name="theme-color" content="#1D6A72">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preload" href="assets/fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/source-serif-4-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/motion.css">
+<script>(function(){try{var t=localStorage.getItem('texkit-site-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<script src="assets/vendor/tailwind-browser.js"></script>
+<style type="text/tailwindcss">
+@theme inline {
+  --color-window: var(--bg-window); --color-surface: var(--bg-surface); --color-card: var(--bg-card); --color-code: var(--bg-code);
+  --color-ink: var(--text-primary); --color-muted: var(--text-secondary); --color-faint: var(--text-tertiary);
+  --color-line: var(--separator); --color-hover: var(--fill-hover);
+  --color-accent: var(--accent); --color-accent-soft: var(--accent-soft); --color-btn: var(--btn); --color-btn-hover: var(--btn-hover);
+  --color-ok: var(--success); --color-ok-soft: var(--success-soft); --color-bad: var(--danger); --color-bad-soft: var(--danger-soft);
+  --color-warn: var(--warning); --color-warn-soft: var(--warning-soft);
+  --font-sans: var(--font-ui); --font-mono: var(--font-mono);
+  --shadow-card: var(--shadow-2); --shadow-pop: var(--shadow-3);
+}
+</style>
+</head>
+<body data-page="releases">
+<div id="site-header"></div>
+
+<main class="mx-auto max-w-6xl px-5 pt-10 sm:pt-14">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-[.8rem] font-semibold uppercase tracking-[.08em] text-faint">Changelog</p>
+      <p class="mt-1 text-lg text-muted">What is new, what changed, and the files for each release.</p>
+    </div>
+    <a href="https://github.com/AbidHasanRafi/texkit-studio" class="inline-flex items-center gap-1.5 text-[.93rem] font-semibold text-accent hover:underline">Source on GitHub <i data-icon="external" class="h-4 w-4"></i></a>
+  </div>
+
+  <div class="grid gap-8 lg:grid-cols-[15rem_1fr] lg:gap-14">
+    <aside aria-label="Releases">
+      <nav id="release-rail" class="flex gap-2 overflow-x-auto pb-2 lg:sticky lg:top-24 lg:flex-col lg:overflow-visible lg:pb-0"></nav>
+    </aside>
+    <article id="release-detail" class="min-w-0 pb-4"></article>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+<script src="assets/js/releases.js"></script>
+<script src="assets/js/release-files.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

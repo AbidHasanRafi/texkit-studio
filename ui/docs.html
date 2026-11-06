@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation · TexKit Studio</title>
+<meta name="description" content="How to install and use TexKit Studio: compiling, figures and citations, the reference check, spelling consistency, the submission check, offline use, commands and privacy.">
+<meta name="theme-color" content="#1D6A72">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preload" href="assets/fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/source-serif-4-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/motion.css">
+<script>(function(){try{var t=localStorage.getItem('texkit-site-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<script src="assets/vendor/tailwind-browser.js"></script>
+<style type="text/tailwindcss">
+@theme inline {
+  --color-window: var(--bg-window); --color-surface: var(--bg-surface); --color-card: var(--bg-card); --color-code: var(--bg-code);
+  --color-ink: var(--text-primary); --color-muted: var(--text-secondary); --color-faint: var(--text-tertiary);
+  --color-line: var(--separator); --color-hover: var(--fill-hover);
+  --color-accent: var(--accent); --color-accent-soft: var(--accent-soft); --color-btn: var(--btn); --color-btn-hover: var(--btn-hover);
+  --color-ok: var(--success); --color-ok-soft: var(--success-soft); --color-bad: var(--danger); --color-bad-soft: var(--danger-soft);
+  --color-warn: var(--warning); --color-warn-soft: var(--warning-soft);
+  --font-sans: var(--font-ui); --font-mono: var(--font-mono);
+  --shadow-card: var(--shadow-2); --shadow-pop: var(--shadow-3);
+}
+</style>
+</head>
+<body data-page="docs">
+<div id="site-header"></div>
+
+<div class="mx-auto max-w-6xl px-5">
+  <!-- Mobile: menu button -->
+  <div class="flex items-center justify-between border-b-[.5px] border-line py-3 lg:hidden">
+    <span class="text-[.9rem] font-semibold text-muted">Documentation</span>
+    <button type="button" id="docs-menu" class="inline-flex items-center gap-2 rounded-lg border-[.5px] border-line bg-surface px-3 py-1.5 text-[.9rem] font-medium shadow-card"><i data-icon="menu" class="h-4 w-4"></i>Sections</button>
+  </div>
+
+  <div class="grid gap-x-12 lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+    <!-- Sidebar -->
+    <aside class="lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:py-8 lg:pr-2">
+      <div id="docs-nav-panel" class="hidden py-4 lg:block lg:py-0">
+        <label class="relative block">
+          <span class="sr-only">Search the documentation</span>
+          <i data-icon="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint"></i>
+          <input id="docs-search" type="search" placeholder="Search docs" autocomplete="off" class="w-full rounded-lg border-[.5px] border-line bg-surface py-2 pl-9 pr-9 text-[.9rem] shadow-card outline-none transition placeholder:text-faint focus:border-accent">
+          <kbd class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[.7rem] text-faint">/</kbd>
+        </label>
+        <nav id="docs-nav" aria-label="Documentation" class="mt-3 pb-8">
+          <p id="docs-search-none" class="hidden px-3 py-4 text-[.9rem] text-muted">Nothing matches that search.</p>
+          <div class="side-group">Getting started</div>
+          <a class="side-link" href="#overview">Overview</a>
+          <a class="side-link" href="#install">Install</a>
+          <a class="side-link" href="#quick-start">Quick start</a>
+          <div class="side-group">Writing</div>
+          <a class="side-link" href="#compile">Compile and preview</a>
+          <a class="side-link" href="#main-file">Which file is compiled</a>
+          <a class="side-link" href="#figures-tables-citations">Figures, tables and sources</a>
+          <a class="side-link" href="#writing-tools">Writing tools</a>
+          <a class="side-link" href="#formatting">Formatting</a>
+          <a class="side-link" href="#history">Version history</a>
+          <a class="side-link" href="#shortcuts">Keyboard shortcuts</a>
+          <div class="side-group">Checking</div>
+          <a class="side-link" href="#reference-check">Reference check</a>
+          <a class="side-link" href="#spelling">Spelling consistency</a>
+          <a class="side-link" href="#submission-check">Submission check</a>
+          <div class="side-group">Projects and output</div>
+          <a class="side-link" href="#export">Downloads</a>
+          <a class="side-link" href="#templates">Templates and import</a>
+          <div class="side-group">Reference</div>
+          <a class="side-link" href="#offline">Engine, packages and offline</a>
+          <a class="side-link" href="#journals">Journals, EPS and full TeX</a>
+          <a class="side-link" href="#settings">Settings and options</a>
+          <a class="side-link" href="#commands">Commands</a>
+          <a class="side-link" href="#privacy">Privacy and safety</a>
+          <a class="side-link" href="#troubleshooting">Troubleshooting</a>
+          <a class="side-link" href="#develop">Develop</a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="doc min-w-0 py-10 lg:py-12">
+
+      <section id="overview">
+        <p class="mb-3 text-[.8rem] font-semibold uppercase tracking-[.08em] text-faint">Documentation · version <span data-latest-version>0.1.2</span></p>
+        <h2 class="!text-4xl sm:!text-5xl">TexKit Studio</h2>
+        <p class="lead">An open-source LaTeX writing studio that runs in your browser, on your own computer. No TeX installation, no account, no compile-time limits, and nothing is uploaded.</p>
+        <ul>
+          <li><b>Nothing to set up.</b> One <code>pip install</code>; the LaTeX engine, a package cache and the Word converter come with it.</li>
+          <li><b>Unlimited compiles.</b> No time limit, no page limit, no queue. Auto-compile follows your typing.</li>
+          <li><b>Private.</b> Your files stay ordinary files in your own folder. Nothing leaves your computer unless you start an online action.</li>
+          <li><b>Built for papers.</b> Every figure, table and citation is tracked, errors are explained in plain English, and a submission check tells you what is left before you send it.</li>
+        </ul>
+        <figure class="shot frame">
+          <div class="frame-bar"><i></i><i></i><i></i></div>
+          <img class="only-light" src="assets/img/app-light.webp" width="2880" height="1800" alt="TexKit Studio in light mode: files, editor and live PDF.">
+          <img class="only-dark" src="assets/img/app-dark.webp" width="2880" height="1800" alt="TexKit Studio in dark mode: files, editor and live PDF.">
+        </figure>
+        <div class="callout"><i data-icon="info" class="ico"></i><p>New in <b><span data-latest-version>0.1.2</span></b>: <a href="#reference-check">reference verification</a>, <a href="#spelling">US/UK spelling consistency</a>, <a href="#main-file">Set as main file</a> and a bundled package cache. <a data-latest-link href="releases.html">Read the release notes</a>.</p></div>
+      </section>
+
+      <section id="install">
+        <h2>Install</h2>
+        <p>You need Python 3.10 or newer. Then:</p>
+<pre><code>pipx install texkit-studio      <span class="c"># recommended: keeps it in its own environment</span>
+<span class="c"># or</span>
+pip install texkit-studio</code></pre>
+        <p>That gives you the <code>texkit</code> command. Windows, Linux and macOS are supported. It has been tested on Windows and Linux; the macOS wheels are built the same way but haven't been tried yet.</p>
+        <ul>
+          <li><b>The LaTeX engine</b> (<a href="https://tectonic-typesetting.github.io">Tectonic</a>) is included in the platform wheels. If your platform has none, it is downloaded and checksum-verified the first time you compile.</li>
+          <li><b>LaTeX packages.</b> The platform wheels also carry a package cache (about 32 MB zipped, 89 MB unpacked). It is unpacked once on the first compile, so ordinary documents compile with no internet at all. See <a href="#offline">Engine, packages and offline</a>.</li>
+          <li>On Ubuntu and Debian, prefer <code>pipx</code> (<code>sudo apt install pipx</code>): a plain <code>pip install</code> into the system Python is blocked there, and <code>python3 -m venv</code> needs the <code>python3-venv</code> package.</li>
+        </ul>
+        <h3>Upgrade and check</h3>
+<pre><code>pipx upgrade texkit-studio      <span class="c"># or: pip install -U texkit-studio</span>
+texkit --version
+texkit doctor                   <span class="c"># the engine, packages, Word export and folders</span></code></pre>
+      </section>
+
+      <section id="quick-start">
+        <h2>Quick start</h2>
+        <p>Go to the folder with your paper and run the command, the same way <code>code .</code> works:</p>
+<pre><code>cd ~/papers/my-thesis
+texkit</code></pre>
+        <p>Your browser opens on that folder: files on the left, the editor in the middle, the PDF on the right. Your files stay ordinary files in that folder, so Git, Dropbox and other editors keep working.</p>
+        <ol>
+          <li><b>Open or start a project.</b> Click the folder name in the toolbar to open another folder, start one from a <a href="#templates">template</a>, or reveal the folder in Explorer or Finder.</li>
+          <li><b>Write.</b> The PDF follows your typing a moment after you stop.</li>
+          <li><b>Read the problems.</b> Errors and warnings are explained in plain English and link to the exact line.</li>
+          <li><b>Check before you submit.</b> The <a href="#reference-check">References</a> and <a href="#submission-check">Check</a> buttons in the header tell you what is left.</li>
+        </ol>
+        <p>Running <code>texkit</code> again while it is already open switches the open studio to the new folder instead of starting a second copy.</p>
+      </section>
+
+      <section id="compile">
+        <h2>Compile and preview</h2>
+        <ul>
+          <li><b>Compile</b> with the button or <kbd>Ctrl/⌘ + Enter</kbd>. By default it also compiles a moment after you stop typing. There is no time limit.</li>
+          <li><b>While it compiles</b>, the preview panel shows a spinner and a progress bar, and the Compile button ignores repeat clicks until the compile finishes.</li>
+          <li><b>Problems in plain English.</b> Errors and warnings link to the exact line, and common mistakes get a one-click fix, such as “Replace with <code>\includegraphics</code>” or “Add <code>\usepackage{booktabs}</code>”.</li>
+          <li><b>Click to jump</b> between the source and the PDF: double-click the PDF, or press <kbd>Ctrl/⌘ + Shift + J</kbd> in the editor.</li>
+          <li><b>Offline:</b> if there is no internet, compiles fall back to packages already on your computer.</li>
+        </ul>
+      </section>
+
+      <section id="main-file">
+        <h2>Which file is compiled</h2>
+        <p>The file with the <b>main</b> badge. If you haven't chosen one, TexKit Studio uses <code>main.tex</code> when that is a complete document, otherwise the first file that has <code>\documentclass</code> and <code>\begin{document}</code> (fewest folders deep, then alphabetical). Hover over the badge to see which rule picked it.</p>
+        <p>To change it, hover any <code>.tex</code> file, in any sub-folder, and click <b>⋯</b> (or right-click) → <b>Set as main file</b>. It recompiles at once. If the file you pick is a chapter rather than a complete document, you are warned.</p>
+        <figure class="shot" style="max-width: 29rem">
+          <div class="frame">
+            <img class="only-light" src="assets/img/main-file.webp" width="920" height="660" loading="lazy" alt="The right-click menu on supplement.tex: Open, Set as main file, Rename and Show in Explorer.">
+            <img class="only-dark" src="assets/img/main-file-dark.webp" width="920" height="660" loading="lazy" alt="The right-click menu on supplement.tex in dark mode: Open, Set as main file, Rename and Show in Explorer.">
+          </div>
+          <figcaption>“Set as main file” on a document inside a sub-folder.</figcaption>
+        </figure>
+        <p>A <code>% !TEX root = ../main.tex</code> line at the top of a chapter makes that chapter compile its root. The choice is stored per folder in <code>.texkit/project.json</code> as <code>mainFile</code>.</p>
+      </section>
+
+      <section id="figures-tables-citations">
+        <h2>Figures, tables and sources, all connected</h2>
+        <p>Many journals require every figure and table to be referred to in the text, and every bibliography entry to be cited. TexKit Studio reads your whole document, including every chapter file, and keeps track of this for you.</p>
+        <ul>
+          <li>The <b>References</b> panel lists every figure, table, equation and bibliography entry, marked <i>referenced 2×</i> or <i>never referenced</i> / <i>not cited</i>. One click inserts a reference to it.</li>
+          <li>The issues panel and the editor flag a figure or table that is never mentioned, a source that is never cited, a <code>\ref</code> or <code>\cite</code> that points nowhere, a figure without a label or caption, figures mentioned out of order, and citations with no bibliography printed. Each comes with a fix, such as adding the missing <code>\label</code> after the caption.</li>
+          <li><b>Insert reference</b> (<kbd>Alt + R</kbd>) and <b>Insert citation</b> (<kbd>Alt + C</kbd>) search by number, caption, author, title or key.</li>
+          <li><b>Add a source by DOI or arXiv ID</b> fetches the BibTeX for you.</li>
+          <li>Hover over a <code>\ref</code> or <code>\cite</code> to see what it points to. <kbd>Ctrl/⌘ + click</kbd> goes there.</li>
+        </ul>
+      </section>
+
+      <section id="writing-tools">
+        <h2>Writing tools</h2>
+        <ul>
+          <li><b>Images:</b> drag one into the text or paste a screenshot. It is saved to <code>figures/</code> and a complete figure block is inserted.</li>
+          <li><b>Tables:</b> build them in a grid, or paste cells from Excel or Sheets.</li>
+          <li><b>Symbols, equations and lists</b> from the Insert menu (<kbd>Alt + S</kbd> for symbols).</li>
+          <li><b>Command palette</b> (<kbd>Ctrl/⌘ + K</kbd>), search across all files (<kbd>Ctrl/⌘ + Shift + F</kbd>), an outline of the whole document, and focus mode.</li>
+          <li>Works on desktop, tablet and phone widths, in light and dark mode.</li>
+        </ul>
+      </section>
+
+      <section id="formatting">
+        <h2>Formatting, like Prettier</h2>
+        <p><b>Format document</b> (<kbd>Shift + Alt + F</kbd>, the wand button, or <code>texkit format</code> in a terminal) tidies the open file: it indents environments, <code>\item</code> text and multi-line <code>{...}</code> groups, lines up the <code>&amp;</code> columns of tables and aligned equations, removes trailing spaces and squeezes extra blank lines.</p>
+        <p>In <code>.tex</code> files it only ever changes whitespace, so the PDF stays exactly the same; <code>verbatim</code> and <code>lstlisting</code> blocks are left untouched. In <code>.bib</code> files it puts one field per line with the <code>=</code> signs lined up. Turn on <i>Format when I press Ctrl/⌘+S</i> in Settings to tidy on every save.</p>
+<pre><code>texkit format               <span class="c"># tidy every .tex and .bib file in this folder</span>
+texkit format --check       <span class="c"># change nothing; exit 1 if anything needs tidying (for CI)</span>
+texkit format --indent 4 chapters/</code></pre>
+      </section>
+
+      <section id="history">
+        <h2>Version history</h2>
+        <p>A snapshot of your text files is kept after every successful compile. Compare any version with the current one, and restore it.</p>
+      </section>
+
+      <section id="shortcuts">
+        <h2>Keyboard shortcuts</h2>
+        <p>On macOS, use <kbd>⌘</kbd> where this table says <kbd>Ctrl</kbd>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Action</th><th>Keys</th></tr></thead>
+            <tbody>
+              <tr><td>Compile</td><td><kbd>Ctrl + Enter</kbd></td></tr>
+              <tr><td>Compile (also saves)</td><td><kbd>Ctrl + S</kbd></td></tr>
+              <tr><td>Format document</td><td><kbd>Shift + Alt + F</kbd></td></tr>
+              <tr><td>Command palette</td><td><kbd>Ctrl + K</kbd></td></tr>
+              <tr><td>Quick open a file</td><td><kbd>Ctrl + P</kbd></td></tr>
+              <tr><td>Insert reference / citation / symbol</td><td><kbd>Alt + R</kbd> / <kbd>Alt + C</kbd> / <kbd>Alt + S</kbd></td></tr>
+              <tr><td>Show this line in the PDF</td><td><kbd>Ctrl + Shift + J</kbd></td></tr>
+              <tr><td>Jump from the PDF to the source</td><td>Double-click the PDF</td></tr>
+              <tr><td>Go to a label, citation or file</td><td><kbd>Ctrl</kbd> + click it</td></tr>
+              <tr><td>Bold / italic</td><td><kbd>Ctrl + B</kbd> / <kbd>Ctrl + I</kbd></td></tr>
+              <tr><td>Comment / uncomment</td><td><kbd>Ctrl + /</kbd></td></tr>
+              <tr><td>Find in file / search all files</td><td><kbd>Ctrl + F</kbd> / <kbd>Ctrl + Shift + F</kbd></td></tr>
+              <tr><td>Toggle issues / sidebar</td><td><kbd>Ctrl + Shift + M</kbd> / <kbd>Ctrl + \</kbd></td></tr>
+              <tr><td>Editor / split / PDF</td><td><kbd>Ctrl + 1</kbd> / <kbd>Ctrl + 2</kbd> / <kbd>Ctrl + 3</kbd></td></tr>
+              <tr><td>Focus mode</td><td><kbd>Ctrl + Shift + Enter</kbd></td></tr>
+              <tr><td>Open folder</td><td><kbd>Ctrl + O</kbd></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reference-check">
+        <h2>Reference check</h2>
+        <p class="lead">Find the references that are invented, mistyped, retracted or missing a DOI, before a reviewer does.</p>
+        <p><b>Check references online</b> looks every bibliography entry up in Crossref, DataCite, OpenAlex and arXiv. Start it from the <b>References</b> button in the header, the ✓ button in the Bibliography panel, the <a href="#submission-check">Submission check</a>, or the command palette (<kbd>Ctrl/⌘ + K</kbd>).</p>
+        <figure class="shot">
+          <div class="frame">
+            <img class="only-light" src="assets/img/reference-check.webp" width="1816" height="1536" loading="lazy" alt="The Check references online dialog with a summary of 3 problems, 1 to check, 1 suggestion and 2 verified, and a retracted paper listed first.">
+            <img class="only-dark" src="assets/img/reference-check-dark.webp" width="1816" height="1536" loading="lazy" alt="The Check references online dialog in dark mode with a summary of 3 problems, 1 to check, 1 suggestion and 2 verified, and a retracted paper listed first.">
+          </div>
+          <figcaption>Problems come first; verified references are folded away.</figcaption>
+        </figure>
+
+        <h3>What the badges mean</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Badge</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge ok">Verified</span></td><td>The DOI resolves to a paper with this title, and the details agree.</td></tr>
+              <tr><td><span class="badge bad">Retracted</span></td><td>Crossref or OpenAlex records the paper as retracted. Don't cite it as sound evidence.</td></tr>
+              <tr><td><span class="badge bad">DOI not found</span></td><td>Crossref and DataCite have no record of the DOI, so it is mistyped or invented.</td></tr>
+              <tr><td><span class="badge bad">Wrong DOI</span></td><td>The DOI belongs to a different work. Either the title or the DOI is wrong.</td></tr>
+              <tr><td><span class="badge warn">Not found</span></td><td>No publication with this title was found, and the entry has no DOI. If it is real, add its DOI; if you are not sure it exists, check it by hand.</td></tr>
+              <tr><td><span class="badge warn">Concern</span></td><td>An expression of concern has been published for the paper.</td></tr>
+              <tr><td><span class="badge warn">Retraction notice</span></td><td>The DOI is a retraction notice, not the paper itself. Cite the original paper instead.</td></tr>
+              <tr><td><span class="badge warn">Details differ</span></td><td>The title, authors or year differ from the registered record.</td></tr>
+              <tr><td><span class="badge warn">Unsure match</span></td><td>A similar title was found, but it may not be the same paper.</td></tr>
+              <tr><td><span class="badge info">No DOI</span></td><td>The paper was found but the entry has no DOI. A suggested DOI is shown, with a button to add it to the entry.</td></tr>
+              <tr><td><span class="badge info">Corrected</span></td><td>A correction or erratum has been published. Check that you cite the corrected facts.</td></tr>
+              <tr><td><span class="badge info">Check authors</span></td><td>The first author differs from the record.</td></tr>
+              <tr><td><span class="badge info">Not indexed</span></td><td>Books, theses, reports and web pages often aren't in these services, so check this one by hand.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><i data-icon="info" class="ico"></i><p>A missing match isn't proof of fraud. Use it as a prompt to look: AI assistants sometimes invent references, but plenty of real ones just aren't indexed.</p></div>
+
+        <h3>In your workflow</h3>
+        <ul>
+          <li>The <b>References</b> button in the header shows a red count for problems, or a green tick when everything is verified.</li>
+          <li>Each entry in the References panel gets a badge, and an entry nobody cites is marked <i>not cited</i>.</li>
+          <li><b>Add DOI to the entry</b> writes the suggested DOI into your <code>.bib</code> file. <b>Show in .bib</b> jumps to the entry.</li>
+          <li><b>Check references automatically</b> (in the dialog, or <a href="#settings">Settings</a>) looks up new and edited entries as you write, and only those.</li>
+          <li>Results are remembered for a week, and an entry is checked again when you edit it.</li>
+        </ul>
+
+        <h3>What is sent, and when</h3>
+        <p>Each entry's title, first author and DOI are sent to Crossref, DataCite, OpenAlex and arXiv, and only when you press the button or turn on automatic checking. Without internet the check stays off and says so; connect and press the button again. If a service is rate-limiting requests, TexKit Studio waits as long as it asks and tries again before giving up on an entry.</p>
+      </section>
+
+      <section id="spelling">
+        <h2>Spelling consistency</h2>
+        <p class="lead">Keep to American or British English, all the way through.</p>
+        <p>Mixing American and British spelling (“color” with “behaviour”, “analyse” in an American text) is underlined in the editor, fixed in one click, shown under a <b>Language</b> filter in the issues panel, and summarised in the <a href="#submission-check">Submission check</a>.</p>
+        <figure class="shot">
+          <div class="frame">
+            <img class="only-light" src="assets/img/spelling.webp" width="2880" height="1800" loading="lazy" alt="The issues panel on the Language filter: analyze and behavior flagged in a mostly British text, each with a Change to button.">
+            <img class="only-dark" src="assets/img/spelling-dark.webp" width="2880" height="1800" loading="lazy" alt="The issues panel in dark mode on the Language filter: analyze and behavior flagged in a mostly British text, each with a Change to button.">
+          </div>
+          <figcaption>“analyze” and “behavior” stand out in a mostly British text. “Change to analyse” fixes the word.</figcaption>
+        </figure>
+
+        <h3>Choosing the language</h3>
+        <p>Open <b>Settings → Spelling</b>:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Choice</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td><b>Auto</b></td><td>Follows <code>\usepackage[british]{babel}</code> (or <code>american</code>) if the document declares one, otherwise whichever variant you use most.</td></tr>
+              <tr><td><b>US</b></td><td>Flags British spellings.</td></tr>
+              <tr><td><b>UK</b></td><td>Flags American spellings.</td></tr>
+              <tr><td><b>Off</b></td><td>No spelling-consistency checks.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="shot" style="max-width: 24rem">
+          <div class="frame">
+            <img class="only-light" src="assets/img/settings.webp" width="1136" height="1536" loading="lazy" alt="The Settings dialog with the Spelling setting set to Auto, US, UK or Off.">
+            <img class="only-dark" src="assets/img/settings-dark.webp" width="1136" height="1536" loading="lazy" alt="The Settings dialog in dark mode with the Spelling setting set to Auto, US, UK or Off.">
+          </div>
+        </figure>
+
+        <h3>Good to know</h3>
+        <ul>
+          <li>“-ize” is accepted in British text (Oxford spelling) unless you also use “-ise”.</li>
+          <li>Maths, code, citations, names in mid-sentence and affiliations are ignored.</li>
+          <li>Add <code>% nospell</code> to the end of a line to skip it, for example for a quotation.</li>
+          <li>Add <code>% texkit-spelling: british</code>, <code>american</code> or <code>off</code> anywhere in a file to set the language for that document or turn the check off.</li>
+        </ul>
+      </section>
+
+      <section id="submission-check">
+        <h2>Submission check</h2>
+        <p>One list of what is left before you send the paper: errors, text running into the margins, unreferenced figures and tables, uncited sources, missing files, mixed spelling, and a prompt to <a href="#reference-check">check your references online</a>. It also shows the page, word and abstract counts.</p>
+        <figure class="shot">
+          <div class="frame">
+            <img class="only-light" src="assets/img/submission-check.webp" width="1816" height="1536" loading="lazy" alt="The Submission check dialog: pages, words, abstract words, figures, tables and sources cited, then a checklist.">
+            <img class="only-dark" src="assets/img/submission-check-dark.webp" width="1816" height="1536" loading="lazy" alt="The Submission check dialog in dark mode: pages, words, abstract words, figures, tables and sources cited, then a checklist.">
+          </div>
+        </figure>
+        <p>Journals differ: treat it as a checklist, not a verdict.</p>
+      </section>
+
+      <section id="export">
+        <h2>Downloads</h2>
+        <p>Use <b>Download</b> in the header to get:</p>
+        <ul>
+          <li>a <b>PDF</b>;</li>
+          <li>a <b>Word</b> file (<code>.docx</code>, converted with Pandoc; formatting is approximate);</li>
+          <li>the whole project as a <b>ZIP</b>;</li>
+          <li>a <b>submission package</b>: one flattened <code>.tex</code> with its <code>.bbl</code> and only the images it uses, as arXiv and journals ask for.</li>
+        </ul>
+      </section>
+
+      <section id="templates">
+        <h2>Templates and import</h2>
+        <ul>
+          <li><b>Templates:</b> Starter tour, Blank article, IEEE conference, Elsevier and Thesis. Start one from the folder menu in the toolbar.</li>
+          <li><b>Import a ZIP</b>, for example an Overleaf download, from the folder menu, or run <code>texkit paper.zip</code>.</li>
+        </ul>
+      </section>
+
+      <section id="offline">
+        <h2>Engine, packages and offline use</h2>
+        <p>TexKit Studio compiles with <a href="https://tectonic-typesetting.github.io">Tectonic</a>, an XeTeX-based engine. The platform wheels carry it, together with a package cache.</p>
+        <ul>
+          <li><b>The package cache</b> (about 32 MB zipped, 89 MB unpacked) holds the common classes at 10, 11 and 12pt, about 190 popular packages, the standard fonts, BibTeX styles and the main babel languages. It is unpacked once, on the first compile, into TexKit Studio's own data folder.</li>
+          <li><b>Anything outside it</b> is fetched the first time a document uses it, then cached. Offline, that compile fails with a clear message instead.</li>
+          <li><b>With the pure wheel</b> or a source install, nothing is bundled: the engine and every package are fetched on first use, and that first compile can take a few minutes.</li>
+          <li><code>texkit doctor</code> shows the state of the engine and the packages. <code>texkit prepare-offline</code> downloads the rest of what the templates need.</li>
+          <li>If you set <code>TECTONIC_CACHE_DIR</code> yourself, TexKit Studio uses your cache and leaves its own alone.</li>
+        </ul>
+      </section>
+
+      <section id="journals">
+        <h2>Journals, EPS images and a full TeX installation</h2>
+        <h3>Journal and conference templates</h3>
+        <p>Templates written for pdfLaTeX compile as they do on Overleaf. The built-in engine is XeTeX-based, so TexKit Studio smooths over the differences before your document starts:</p>
+        <ul>
+          <li>pdfTeX-only commands (<code>\pdfgentounicode</code>, <code>\pdfglyphtounicode</code>, <code>\pdfminorversion</code>, …) are accepted;</li>
+          <li><code>[pdftex]</code> and <code>[dvips]</code> driver options become <code>[xetex]</code>;</li>
+          <li><code>biblatex</code> switches from Biber to BibTeX, and an info message says so;</li>
+          <li>Unicode text such as <code>š</code>, <code>×</code> or <code>–</code> prints correctly with the usual 8-bit fonts instead of vanishing or showing the wrong glyph.</li>
+        </ul>
+        <h3>EPS images</h3>
+        <p>The engine can't embed <code>.eps</code> files itself, so TexKit Studio uses <code>name-eps-converted-to.pdf</code> when it sits next to the image (Overleaf and Prism leave these behind), otherwise converts the image with <a href="https://ghostscript.com/releases/gsdnld.html">Ghostscript</a> if it is installed. With neither, the compile still succeeds, the image is a grey placeholder, and the issues panel says which one is missing. Converted files live in the build cache, not in your folder.</p>
+        <h3>A full TeX installation, when a document needs one</h3>
+        <p>If TeX Live, MiKTeX, MacTeX or TinyTeX is installed, documents that need more than the built-in engine are built with it automatically: an index or glossary, <code>biblatex</code> with Biber styles, <code>minted</code>, packages newer than the built-in LaTeX (2021), and fonts by name. If the built-in engine fails for such a reason, the installation is tried as a second attempt and the better result is kept. Without one, the issues panel names what the document uses and what is missing. Run <code>texkit doctor</code> to see what was found.</p>
+      </section>
+
+      <section id="settings">
+        <h2>Settings and options</h2>
+        <h3>In the app</h3>
+        <p>Open <b>Settings</b> (the sliders icon in the header):</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Setting</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Appearance</td><td>System, Light or Dark.</td></tr>
+              <tr><td>Compile automatically</td><td>Compile a moment after you stop typing.</td></tr>
+              <tr><td>Check references automatically</td><td>Look up new and edited references online and badge them. Sends their title, first author and DOI.</td></tr>
+              <tr><td>Spelling</td><td>Auto, US, UK or Off. See <a href="#spelling">Spelling consistency</a>.</td></tr>
+              <tr><td>Wrap long lines</td><td>Wrap lines in the editor.</td></tr>
+              <tr><td>Format when I press Ctrl/⌘+S</td><td>Tidy the file before compiling, like Prettier format on save.</td></tr>
+              <tr><td>Indentation</td><td>2 or 4 spaces.</td></tr>
+              <tr><td>Line up table columns</td><td>Align the <code>&amp;</code> in tables and equations.</td></tr>
+              <tr><td>Spell check</td><td>Underline misspelled words using your browser's dictionary.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Per folder</h3>
+        <p>Options for one folder go in <code>.texkit/project.json</code>:</p>
+<pre><code>{ <span class="k">"engine"</span>: "auto", <span class="k">"shellEscape"</span>: false, <span class="k">"autoInstall"</span>: false, <span class="k">"mainFile"</span>: "main.tex" }</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Key</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code>engine</code></td><td><code>auto</code> (default), <code>tectonic</code> or <code>system</code>.</td></tr>
+              <tr><td><code>shellEscape</code></td><td>Lets that folder's documents run programs, which <code>minted</code> and <code>svg</code> need. Off by default; only turn it on for documents you trust.</td></tr>
+              <tr><td><code>autoInstall</code></td><td>Lets MiKTeX download missing packages. Off by default, because MiKTeX would otherwise open a dialog that an automatic compile can't answer.</td></tr>
+              <tr><td><code>mainFile</code></td><td>The file to compile. Set for you by <b>Set as main file</b>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Environment variables</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Variable</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code>TEXKIT_ENGINE</code></td><td>Overrides <code>engine</code>: <code>auto</code>, <code>tectonic</code> or <code>system</code>.</td></tr>
+              <tr><td><code>TEXKIT_SHELL_ESCAPE=1</code></td><td>Overrides <code>shellEscape</code>.</td></tr>
+              <tr><td><code>TEXKIT_TEXBIN</code></td><td>The folder holding the TeX programs, if they aren't found on their own.</td></tr>
+              <tr><td><code>TEXKIT_TECTONIC</code></td><td>Use this Tectonic binary instead of the bundled one.</td></tr>
+              <tr><td><code>TEXKIT_GS</code></td><td>The Ghostscript program used for EPS images.</td></tr>
+              <tr><td><code>TECTONIC_CACHE_DIR</code></td><td>Use this package cache instead of TexKit Studio's own.</td></tr>
+              <tr><td><code>TEXKIT_DATA_DIR</code>, <code>TEXKIT_CACHE_DIR</code></td><td>Where TexKit Studio keeps its data and its build cache.</td></tr>
+              <tr><td><code>TEXKIT_NO_PRELUDE</code></td><td>Turns off the pdfTeX-compatibility layer described in <a href="#journals">Journals</a>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="commands">
+        <h2>Commands</h2>
+<pre><code>texkit PATH             <span class="c"># open another folder (or the folder of a .tex file, or a .zip)</span>
+texkit --port 9000      <span class="c"># use a different port (default 8765; a free one is picked if busy)</span>
+texkit --no-browser     <span class="c"># start without opening a browser tab</span>
+texkit --version        <span class="c"># show the version</span>
+texkit compile [PATH]   <span class="c"># compile without the UI and print any problems (handy for CI)</span>
+texkit format [PATH]    <span class="c"># tidy .tex and .bib files, like Prettier (--check for CI)</span>
+texkit prepare-offline  <span class="c"># download the packages the templates use, for offline work</span>
+texkit doctor           <span class="c"># check the engine, packages, Word export and folders</span></code></pre>
+      </section>
+
+      <section id="privacy">
+        <h2>Privacy and safety</h2>
+        <ul>
+          <li>The server listens on <code>127.0.0.1</code> only, and every request needs a session cookie set by the link the command opens.</li>
+          <li>Requests with another <code>Host</code> header are rejected, which blocks DNS-rebinding attacks.</li>
+          <li>Documents can't run programs (shell-escape is off) unless you turn on <code>shellEscape</code> for that folder yourself.</li>
+          <li>Deleting a file moves it to the Recycle Bin or Trash.</li>
+          <li><b>Your files are never uploaded.</b> The only things that go online are the actions you start: looking up a DOI, and <b>Check references online</b>, which sends each entry's title, first author and DOI to Crossref, DataCite, OpenAlex and arXiv.</li>
+        </ul>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>Troubleshooting</h2>
+        <h3>The page says “Open TexKit Studio from your terminal”</h3>
+        <p>For privacy, the page only works through the link the command opens. In a terminal, go to your project folder and run <code>texkit</code>.</p>
+        <h3>The first compile is slow</h3>
+        <p>With a platform wheel, the first compile unpacks the bundled package cache, which takes a few seconds, once. With the pure wheel or a source install, every package is fetched on first use, and that can take a few minutes on a slow connection. <code>texkit doctor</code> shows which case you are in.</p>
+        <h3>A compile fails with no internet</h3>
+        <p>The document uses a package that isn't in the bundled cache and hasn't been downloaded yet. Connect once and compile, and it is cached for next time.</p>
+        <h3>“Check references online” says it has no internet connection</h3>
+        <p>The check needs a connection and stays off without one. Connect and press the button again.</p>
+        <h3>An entry says the service is rate-limiting requests</h3>
+        <p>Crossref, OpenAlex or another service asked TexKit Studio to slow down and kept asking. Wait a minute and press the button again.</p>
+        <h3>An EPS image is a grey placeholder</h3>
+        <p>Neither a <code>name-eps-converted-to.pdf</code> next to the image nor Ghostscript was found. See <a href="#journals">EPS images</a>.</p>
+        <h3><code>pip install</code> is blocked on Ubuntu or Debian</h3>
+        <p>Use <code>pipx</code>: <code>sudo apt install pipx</code>, then <code>pipx install texkit-studio</code>.</p>
+        <h3>The default port is busy</h3>
+        <p>TexKit Studio picks a free port by itself. To choose one, use <code>texkit --port 9000</code>.</p>
+      </section>
+
+      <section id="develop">
+        <h2>Develop</h2>
+        <p>TexKit Studio is a pure Python repository: no Node.js and no build step. The web UI is plain JavaScript modules in <code>src/texkit_studio/static/</code>, with CodeMirror and PDF.js vendored by <code>scripts/vendor.py</code>.</p>
+<pre><code>git clone https://github.com/AbidHasanRafi/texkit-studio.git
+cd texkit-studio
+python -m venv .venv
+.venv/Scripts/activate            <span class="c"># Windows (on macOS/Linux: source .venv/bin/activate)</span>
+pip install -e ".[dev]"
+pytest</code></pre>
+        <p>The source, the issue tracker and the contribution notes are on <a href="https://github.com/AbidHasanRafi/texkit-studio">GitHub</a>. TexKit Studio is released under the MIT licence.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="site-footer"></div>
+<script src="assets/js/releases.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>
